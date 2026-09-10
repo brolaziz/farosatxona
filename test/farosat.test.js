@@ -46,6 +46,19 @@ test("ketma-ket kunlar seriya beradi, tanaffus esa uni buzadi", () => {
   db.close();
 });
 
+test("admin statistikani ko‘radi va faqat tanlangan guruhni tozalaydi", () => {
+  const db = new FarosatDatabase(":memory:");
+  const common = { userId: 9, displayName: "Ali", playDate: "2026-09-10", random: sequence([0, 0]) };
+  db.play({ ...common, chatId: -100 });
+  db.play({ ...common, chatId: -200 });
+  assert.equal(db.stats(-100).players, 1);
+  assert.equal(db.stats(-100).totalChats, 2);
+  assert.deepEqual(db.clearChat(-100), { players: 1, rolls: 1 });
+  assert.equal(db.stats(-100).players, 0);
+  assert.equal(db.stats(-200).players, 1);
+  db.close();
+});
+
 test("sana timezone bo‘yicha hisoblanadi", () => {
   const instant = new Date("2026-09-09T20:30:00Z");
   assert.equal(localDate("Asia/Tashkent", instant), "2026-09-10");

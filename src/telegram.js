@@ -23,11 +23,11 @@ export class TelegramClient {
     return this.call("getUpdates", {
       offset,
       timeout: 30,
-      allowed_updates: ["message"]
+      allowed_updates: ["message", "callback_query"]
     }, signal);
   }
 
-  sendMessage(message, text) {
+  sendMessage(message, text, replyMarkup) {
     const body = {
       chat_id: message.chat.id,
       text,
@@ -36,7 +36,28 @@ export class TelegramClient {
       reply_parameters: { message_id: message.message_id, allow_sending_without_reply: true }
     };
     if (message.message_thread_id) body.message_thread_id = message.message_thread_id;
+    if (replyMarkup) body.reply_markup = replyMarkup;
     return this.call("sendMessage", body);
+  }
+
+  editMessage(message, text, replyMarkup) {
+    const body = {
+      chat_id: message.chat.id,
+      message_id: message.message_id,
+      text,
+      parse_mode: "HTML",
+      link_preview_options: { is_disabled: true }
+    };
+    if (replyMarkup) body.reply_markup = replyMarkup;
+    return this.call("editMessageText", body);
+  }
+
+  answerCallbackQuery(callbackQueryId, text, showAlert = false) {
+    return this.call("answerCallbackQuery", {
+      callback_query_id: callbackQueryId,
+      text,
+      show_alert: showAlert
+    });
   }
 
   setCommands() {
@@ -46,6 +67,8 @@ export class TelegramClient {
         { command: "men", description: "Farosat pasportim" },
         { command: "top", description: "Guruhning eng farosatlilari" },
         { command: "darajalar", description: "Darajalar va imkoniyatlar" },
+        { command: "id", description: "Telegram ID raqamingiz" },
+        { command: "admin", description: "Farosatxona boshqaruvi" },
         { command: "help", description: "Botdan foydalanish" }
       ]
     });

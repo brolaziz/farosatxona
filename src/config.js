@@ -21,8 +21,15 @@ export function getConfig() {
   loadDotEnv();
   const token = process.env.BOT_TOKEN;
   if (!token) throw new Error("BOT_TOKEN topilmadi. .env.example faylidan .env yarating.");
+  const adminIds = new Set(
+    (process.env.ADMIN_IDS || "")
+      .split(/[\s,]+/)
+      .map((id) => id.trim())
+      .filter((id) => /^\d+$/.test(id))
+  );
   return {
     token,
+    adminIds,
     databasePath: process.env.DATABASE_PATH || "./data/farosatxona.db",
     timeZone: process.env.TZ || "Asia/Tashkent"
   };

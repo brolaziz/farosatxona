@@ -94,6 +94,7 @@ export const HELP_TEXT = [
   "/men — o‘z holatingizni ko‘rish",
   "/top — guruh reytingi",
   "/darajalar — daraja va imkoniyatlar",
+  "/id — Telegram ID raqamingiz",
   "/help — shu yo‘riqnoma",
   "",
   "Har kuni bir luqma. Farosat qo‘shilishi ham, qaytarib olinishi ham mumkin. Farosatxona ma’muriyati oqibatlarga javob bermaydi."

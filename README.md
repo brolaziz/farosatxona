@@ -10,6 +10,7 @@ Guruh a'zolari Farosatxonaga har kuni bir marta `/farosat` yozib, tasodifiy faro
 - kulgili musbat/manfiy hukmlar va daraja almashish xabarlari;
 - guruh bo'yicha TOP-10;
 - kunlik seriya va shaxsiy statistika;
+- faqat ruxsat berilgan foydalanuvchilar uchun tugmali admin panel;
 - tashqi kutubxonasiz ishlaydi: Node.js va ichki SQLite yetarli.
 
 ## Ishga tushirish
@@ -19,6 +20,7 @@ Talab: **Node.js 22.13 yoki yangiroq**.
 1. Telegram'da `@BotFather` bilan bot yarating va token oling.
 2. `.env.example` nusxasini `.env` nomi bilan saqlang.
 3. `.env` ichidagi `BOT_TOKEN` qiymatini haqiqiy token bilan almashtiring.
+   `/id` komandasi ko'rsatgan raqamni `ADMIN_IDS` ga yozing. Bir nechta adminni vergul bilan ajratish mumkin.
 4. Botni ishga tushiring:
 
 ```bash
@@ -37,6 +39,8 @@ Bot faqat slash-komandalarni o'qiydi, shuning uchun BotFather'dagi privacy mode'
 | `/men` | Shaxsiy statistika va daraja |
 | `/top` | Guruhning TOP-10 reytingi |
 | `/darajalar` | Daraja chegaralari va imkoniyatlar |
+| `/id` | Telegram ID raqamini ko'rsatadi |
+| `/admin` | Statistika va guruh bazasini tozalash paneli |
 | `/help` | Qisqa yo'riqnoma |
 
 ## Tekshirish

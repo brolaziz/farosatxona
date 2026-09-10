@@ -117,6 +117,36 @@ export class FarosatDatabase {
     `).all(String(chatId), limit);
   }
 
+  stats(chatId) {
+    const chat = String(chatId);
+    const chatStats = this.db.prepare(`
+      SELECT
+        COUNT(*) AS players,
+        COALESCE(SUM(grams), 0) AS grams,
+        COALESCE(SUM(plays), 0) AS plays
+      FROM players WHERE chat_id = ?
+    `).get(chat);
+    const totalStats = this.db.prepare(`
+      SELECT COUNT(*) AS players, COUNT(DISTINCT chat_id) AS chats
+      FROM players
+    `).get();
+    return { ...chatStats, totalPlayers: totalStats.players, totalChats: totalStats.chats };
+  }
+
+  clearChat(chatId) {
+    const chat = String(chatId);
+    this.db.exec("BEGIN IMMEDIATE");
+    try {
+      const rolls = this.db.prepare("DELETE FROM daily_rolls WHERE chat_id = ?").run(chat).changes;
+      const players = this.db.prepare("DELETE FROM players WHERE chat_id = ?").run(chat).changes;
+      this.db.exec("COMMIT");
+      return { players, rolls };
+    } catch (error) {
+      this.db.exec("ROLLBACK");
+      throw error;
+    }
+  }
+
   close() {
     this.db.close();
   }

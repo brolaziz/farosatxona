@@ -16,6 +16,20 @@ const database = new FarosatDatabase(config.databasePath);
 const telegram = new TelegramClient(config.token);
 const controller = new AbortController();
 
+const ADMIN_MENU = {
+  inline_keyboard: [
+    [{ text: "📊 Statistika", callback_data: "admin:stats" }],
+    [{ text: "🧹 Shu guruhni tozalash", callback_data: "admin:clear:ask" }]
+  ]
+};
+
+const CLEAR_CONFIRMATION = {
+  inline_keyboard: [[
+    { text: "❌ Bekor qilish", callback_data: "admin:cancel" },
+    { text: "🗑 Ha, tozalash", callback_data: "admin:clear:confirm" }
+  ]]
+};
+
 function displayName(user) {
   return user.first_name || user.username || "Noma’lum";
 }
@@ -23,6 +37,59 @@ function displayName(user) {
 function commandFrom(text) {
   const match = text?.match(/^\/([\w]+)(?:@[\w]+)?(?:\s|$)/u);
   return match?.[1]?.toLocaleLowerCase("uz") ?? null;
+}
+
+function isAdmin(userId) {
+  return config.adminIds.has(String(userId));
+}
+
+function formatAdminStats(stats) {
+  return [
+    "📊 <b>Farosatxona hisoboti</b>",
+    `Shu guruh: <b>${stats.players}</b> kishi · <b>${stats.grams} g</b> · <b>${stats.plays}</b> urinish`,
+    `Barcha guruhlar: <b>${stats.totalPlayers}</b> kishi · <b>${stats.totalChats}</b> guruh`
+  ].join("\n");
+}
+
+async function handleCallback(query) {
+  if (!query.message || !query.from) return;
+  if (!isAdmin(query.from.id)) {
+    await telegram.answerCallbackQuery(query.id, "Bu tugma Farosatxona mudiriga tegishli.", true);
+    return;
+  }
+
+  const chatId = query.message.chat.id;
+  switch (query.data) {
+    case "admin:stats":
+      await telegram.answerCallbackQuery(query.id, "Yangilandi");
+      await telegram.editMessage(query.message, formatAdminStats(database.stats(chatId)), ADMIN_MENU);
+      break;
+    case "admin:clear:ask":
+      await telegram.answerCallbackQuery(query.id, "Tasdiqlash kerak");
+      await telegram.editMessage(
+        query.message,
+        "⚠️ <b>Shu guruhdagi barcha ballar va kunlik natijalar o‘chadi.</b>\nBu amalni ortga qaytarib bo‘lmaydi.",
+        CLEAR_CONFIRMATION
+      );
+      break;
+    case "admin:clear:confirm": {
+      const removed = database.clearChat(chatId);
+      console.log(`Admin ${query.from.id} chat ${chatId} bazasini tozaladi:`, removed);
+      await telegram.answerCallbackQuery(query.id, "Baza tozalandi");
+      await telegram.editMessage(
+        query.message,
+        `🧹 Baza tozalandi: <b>${removed.players}</b> kishi, <b>${removed.rolls}</b> natija o‘chirildi.`,
+        ADMIN_MENU
+      );
+      break;
+    }
+    case "admin:cancel":
+      await telegram.answerCallbackQuery(query.id, "Bekor qilindi");
+      await telegram.editMessage(query.message, "🔐 <b>Farosatxona boshqaruvi</b>", ADMIN_MENU);
+      break;
+    default:
+      await telegram.answerCallbackQuery(query.id, "Noma’lum buyruq");
+  }
 }
 
 async function handleMessage(message) {
@@ -60,11 +127,23 @@ async function handleMessage(message) {
     case "darajalar":
       response = formatLevels();
       break;
+    case "id":
+      response = `🪪 ${displayName(user)}, Telegram ID raqamingiz: <code>${user.id}</code>`;
+      break;
+    case "admin":
+      if (!isAdmin(user.id)) {
+        response = config.adminIds.size === 0
+          ? `🔒 Admin hali belgilanmagan. /id orqali raqamingizni oling va Railway’da <code>ADMIN_IDS</code> ga yozing.`
+          : "🚪 Bu eshik faqat Farosatxona mudiriga ochiladi.";
+      } else {
+        response = "🔐 <b>Farosatxona boshqaruvi</b>";
+      }
+      break;
     default:
       return;
   }
 
-  await telegram.sendMessage(message, response);
+  await telegram.sendMessage(message, response, command === "admin" && isAdmin(user.id) ? ADMIN_MENU : undefined);
 }
 
 async function run() {
@@ -77,9 +156,9 @@ async function run() {
       const updates = await telegram.getUpdates(offset, controller.signal);
       for (const update of updates) {
         offset = Math.max(offset, update.update_id + 1);
-        if (!update.message) continue;
         try {
-          await handleMessage(update.message);
+          if (update.message) await handleMessage(update.message);
+          if (update.callback_query) await handleCallback(update.callback_query);
         } catch (error) {
           console.error(`Update ${update.update_id} bajarilmadi:`, error);
         }
