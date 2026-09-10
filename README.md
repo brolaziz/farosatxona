@@ -10,7 +10,7 @@ Guruh a'zolari Farosatxonaga har kuni bir marta `/farosat` yozib, tasodifiy faro
 - kulgili musbat/manfiy hukmlar va daraja almashish xabarlari;
 - guruh bo'yicha TOP-10;
 - kunlik seriya va shaxsiy statistika;
-- faqat ruxsat berilgan foydalanuvchilar uchun tugmali admin panel;
+- faqat ruxsat berilgan foydalanuvchilar uchun tugmali admin panel: umumiy statistika, guruhlar, a'zolar, ballni o'zgartirish va xavfsiz tozalash;
 - tashqi kutubxonasiz ishlaydi: Node.js va ichki SQLite yetarli.
 
 ## Ishga tushirish

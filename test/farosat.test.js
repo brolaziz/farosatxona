@@ -49,6 +49,8 @@ test("ketma-ket kunlar seriya beradi, tanaffus esa uni buzadi", () => {
 test("admin statistikani ko‘radi va faqat tanlangan guruhni tozalaydi", () => {
   const db = new FarosatDatabase(":memory:");
   const common = { userId: 9, displayName: "Ali", playDate: "2026-09-10", random: sequence([0, 0]) };
+  db.rememberChat(-100, "Birinchi guruh", "supergroup");
+  db.rememberChat(-200, "Ikkinchi guruh", "group");
   db.play({ ...common, chatId: -100 });
   db.play({ ...common, chatId: -200 });
   assert.equal(db.stats(-100).players, 1);
@@ -56,6 +58,20 @@ test("admin statistikani ko‘radi va faqat tanlangan guruhni tozalaydi", () => 
   assert.deepEqual(db.clearChat(-100), { players: 1, rolls: 1 });
   assert.equal(db.stats(-100).players, 0);
   assert.equal(db.stats(-200).players, 1);
+  db.close();
+});
+
+test("admin guruh, a’zo va barcha ballarni boshqara oladi", () => {
+  const db = new FarosatDatabase(":memory:");
+  db.rememberChat(-100, "Sinov guruhi", "supergroup");
+  db.play({ chatId: -100, userId: 1, displayName: "Ali", playDate: "2026-09-10", random: sequence([0, 0]) });
+  assert.equal(db.listChats()[0].title, "Sinov guruhi");
+  assert.equal(db.adjustPlayer(-100, 1, 10).grams, 11);
+  assert.equal(db.adjustPlayer(-100, 1, -50).grams, 0);
+  assert.deepEqual(db.deletePlayer(-100, 1), { players: 1, rolls: 1 });
+  db.play({ chatId: -100, userId: 2, displayName: "Vali", playDate: "2026-09-10", random: sequence([0, 0]) });
+  assert.deepEqual(db.clearAllScores(), { players: 1, rolls: 1 });
+  assert.equal(db.listChats().length, 1);
   db.close();
 });
 

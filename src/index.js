@@ -8,7 +8,8 @@ import {
   formatProfile,
   formatRoll,
   HELP_TEXT,
-  mention
+  mention,
+  escapeHtml
 } from "./messages.js";
 import { TelegramClient } from "./telegram.js";
 
@@ -19,17 +20,40 @@ const controller = new AbortController();
 
 const ADMIN_MENU = {
   inline_keyboard: [
-    [{ text: "📊 Statistika", callback_data: "admin:stats" }],
-    [{ text: "🧹 Shu guruhni tozalash", callback_data: "admin:clear:ask" }]
+    [
+      { text: "📊 Umumiy holat", callback_data: "admin:stats" },
+      { text: "🏘 Guruhlar", callback_data: "admin:groups" }
+    ],
+    [{ text: "☢️ Barcha ballarni tozalash", callback_data: "admin:all:ask" }]
   ]
 };
 
-const CLEAR_CONFIRMATION = {
-  inline_keyboard: [[
-    { text: "❌ Bekor qilish", callback_data: "admin:cancel" },
-    { text: "🗑 Ha, tozalash", callback_data: "admin:clear:confirm" }
-  ]]
-};
+function backButton(target = "admin:main") {
+  return [{ text: "⬅️ Orqaga", callback_data: target }];
+}
+
+function groupMenu(chatId) {
+  return {
+    inline_keyboard: [
+      [{ text: "👥 A’zolar", callback_data: `admin:members:${chatId}` }],
+      [{ text: "🧹 Guruh ballarini tozalash", callback_data: `admin:gclearask:${chatId}` }],
+      backButton("admin:groups")
+    ]
+  };
+}
+
+function memberMenu(chatId, userId) {
+  return {
+    inline_keyboard: [
+      [
+        { text: "➖10 g", callback_data: `admin:adjust:${chatId}:${userId}:-10` },
+        { text: "➕10 g", callback_data: `admin:adjust:${chatId}:${userId}:10` }
+      ],
+      [{ text: "🗑 A’zoni o‘chirish", callback_data: `admin:pdelask:${chatId}:${userId}` }],
+      backButton(`admin:members:${chatId}`)
+    ]
+  };
+}
 
 function displayName(user) {
   return user.first_name || user.username || "Noma’lum";
@@ -47,9 +71,52 @@ function isAdmin(userId) {
 function formatAdminStats(stats) {
   return [
     "📊 <b>Farosatxona hisoboti</b>",
-    `Shu guruh: <b>${stats.players}</b> kishi · <b>${stats.grams} g</b> · <b>${stats.plays}</b> urinish`,
-    `Barcha guruhlar: <b>${stats.totalPlayers}</b> kishi · <b>${stats.totalChats}</b> guruh`
+    `Guruhlar: <b>${stats.totalChats}</b>`,
+    `O‘yinchilar: <b>${stats.totalPlayers}</b>`,
+    `Jami farosat: <b>${stats.totalGrams} g</b>`,
+    `Jami urinish: <b>${stats.totalPlays}</b>`
   ].join("\n");
+}
+
+function formatGroup(databaseChat, stats) {
+  const title = databaseChat?.title ?? databaseChat?.chat_id ?? "Noma’lum guruh";
+  return [
+    `🏠 <b>${escapeHtml(title)}</b>`,
+    `A’zolar: <b>${stats.players}</b> · Farosat: <b>${stats.grams} g</b>`,
+    `Urinishlar: <b>${stats.plays}</b>`
+  ].join("\n");
+}
+
+function formatMember(player) {
+  return [
+    `👤 <b>${escapeHtml(player.display_name)}</b>`,
+    `Farosat: <b>${player.grams} g</b>`,
+    `Urinishlar: <b>${player.plays}</b>`
+  ].join("\n");
+}
+
+function groupsKeyboard(chats) {
+  return {
+    inline_keyboard: [
+      ...chats.map((chat) => [{
+        text: `${chat.type === "private" ? "👤" : "🏠"} ${chat.title.slice(0, 30)} · ${chat.players}`,
+        callback_data: `admin:group:${chat.chat_id}`
+      }]),
+      backButton()
+    ]
+  };
+}
+
+function membersKeyboard(chatId, players) {
+  return {
+    inline_keyboard: [
+      ...players.map((player) => [{
+        text: `👤 ${player.display_name.slice(0, 28)} · ${player.grams} g`,
+        callback_data: `admin:member:${chatId}:${player.user_id}`
+      }]),
+      backButton(`admin:group:${chatId}`)
+    ]
+  };
 }
 
 async function handleCallback(query) {
@@ -60,37 +127,148 @@ async function handleCallback(query) {
   }
 
   const chatId = query.message.chat.id;
-  switch (query.data) {
+  const data = query.data ?? "";
+  switch (data) {
+    case "admin:main":
+      await telegram.answerCallbackQuery(query.id, "Bosh menyu");
+      await telegram.editMessage(query.message, "🔐 <b>Farosatxona boshqaruvi</b>", ADMIN_MENU);
+      break;
     case "admin:stats":
       await telegram.answerCallbackQuery(query.id, "Yangilandi");
       await telegram.editMessage(query.message, formatAdminStats(database.stats(chatId)), ADMIN_MENU);
       break;
-    case "admin:clear:ask":
-      await telegram.answerCallbackQuery(query.id, "Tasdiqlash kerak");
+    case "admin:groups": {
+      const chats = database.listChats();
+      await telegram.answerCallbackQuery(query.id, `${chats.length} ta chat`);
       await telegram.editMessage(
         query.message,
-        "⚠️ <b>Shu guruhdagi barcha ballar va kunlik natijalar o‘chadi.</b>\nBu amalni ortga qaytarib bo‘lmaydi.",
-        CLEAR_CONFIRMATION
-      );
-      break;
-    case "admin:clear:confirm": {
-      const removed = database.clearChat(chatId);
-      console.log(`Admin ${query.from.id} chat ${chatId} bazasini tozaladi:`, removed);
-      await telegram.answerCallbackQuery(query.id, "Baza tozalandi");
-      await telegram.editMessage(
-        query.message,
-        `🧹 Baza tozalandi: <b>${removed.players}</b> kishi, <b>${removed.rolls}</b> natija o‘chirildi.`,
-        ADMIN_MENU
+        chats.length ? "🏘 <b>Guruhlar va chatlar</b>" : "🏜 Hali birorta guruh qayd etilmagan.",
+        groupsKeyboard(chats)
       );
       break;
     }
-    case "admin:cancel":
-      await telegram.answerCallbackQuery(query.id, "Bekor qilindi");
-      await telegram.editMessage(query.message, "🔐 <b>Farosatxona boshqaruvi</b>", ADMIN_MENU);
+    case "admin:all:ask":
+      await telegram.answerCallbackQuery(query.id, "Tasdiqlash kerak");
+      await telegram.editMessage(
+        query.message,
+        "☢️ <b>BARCHA guruhlardagi ballar va kunlik natijalar o‘chadi.</b>\nGuruhlar ro‘yxati saqlanadi. Ortga qaytarib bo‘lmaydi.",
+        { inline_keyboard: [
+          [{ text: "❌ Bekor qilish", callback_data: "admin:main" }],
+          [{ text: "☢️ Ha, barchasini tozalash", callback_data: "admin:all:confirm" }]
+        ] }
+      );
       break;
+    case "admin:all:confirm": {
+      const removed = database.clearAllScores();
+      console.log(`Admin ${query.from.id} barcha ballarni tozaladi:`, removed);
+      await telegram.answerCallbackQuery(query.id, "Barcha ballar tozalandi");
+      await telegram.editMessage(query.message, `🧹 <b>${removed.players}</b> kishi va <b>${removed.rolls}</b> natija o‘chirildi.`, ADMIN_MENU);
+      break;
+    }
     default:
-      await telegram.answerCallbackQuery(query.id, "Noma’lum buyruq");
+      await handleAdminTarget(query, data);
   }
+}
+
+async function handleAdminTarget(query, data) {
+  const parts = data.split(":");
+  const action = parts[1];
+  const chatId = parts[2];
+  const userId = parts[3];
+
+  if (action === "group") {
+    const chat = database.getChat(chatId) ?? { chat_id: chatId, title: chatId };
+    await telegram.answerCallbackQuery(query.id, "Guruh ochildi");
+    await telegram.editMessage(query.message, formatGroup(chat, database.stats(chatId)), groupMenu(chatId));
+    return;
+  }
+
+  if (action === "members") {
+    const players = database.leaderboard(chatId, 20);
+    await telegram.answerCallbackQuery(query.id, `${players.length} ta a’zo`);
+    await telegram.editMessage(
+      query.message,
+      players.length ? "👥 <b>A’zolar</b>" : "🏜 Bu guruhda hali o‘yinchi yo‘q.",
+      membersKeyboard(chatId, players)
+    );
+    return;
+  }
+
+  if (action === "member") {
+    const player = database.getPlayer(chatId, userId);
+    await telegram.answerCallbackQuery(query.id, player ? "A’zo ochildi" : "A’zo topilmadi");
+    await telegram.editMessage(
+      query.message,
+      player ? formatMember(player) : "Bu a’zo bazada qolmagan.",
+      player ? memberMenu(chatId, userId) : membersKeyboard(chatId, database.leaderboard(chatId, 20))
+    );
+    return;
+  }
+
+  if (action === "adjust") {
+    const delta = Number(parts[4]);
+    const player = Number.isFinite(delta) ? database.adjustPlayer(chatId, userId, delta) : null;
+    await telegram.answerCallbackQuery(query.id, player ? `${delta > 0 ? "+" : ""}${delta} g` : "A’zo topilmadi");
+    await telegram.editMessage(
+      query.message,
+      player ? formatMember(player) : "Bu a’zo bazada qolmagan.",
+      player ? memberMenu(chatId, userId) : membersKeyboard(chatId, database.leaderboard(chatId, 20))
+    );
+    return;
+  }
+
+  if (action === "pdelask") {
+    const player = database.getPlayer(chatId, userId);
+    await telegram.answerCallbackQuery(query.id, "Tasdiqlash kerak");
+    await telegram.editMessage(
+      query.message,
+      `⚠️ <b>${escapeHtml(player?.display_name ?? "Bu a’zo")}</b> va uning barcha natijalari o‘chirilsinmi?`,
+      { inline_keyboard: [[
+        { text: "❌ Yo‘q", callback_data: `admin:member:${chatId}:${userId}` },
+        { text: "🗑 Ha", callback_data: `admin:pdelconfirm:${chatId}:${userId}` }
+      ]] }
+    );
+    return;
+  }
+
+  if (action === "pdelconfirm") {
+    const removed = database.deletePlayer(chatId, userId);
+    await telegram.answerCallbackQuery(query.id, "A’zo o‘chirildi");
+    await telegram.editMessage(
+      query.message,
+      `🗑 A’zo va <b>${removed.rolls}</b> natija o‘chirildi.`,
+      membersKeyboard(chatId, database.leaderboard(chatId, 20))
+    );
+    return;
+  }
+
+  if (action === "gclearask") {
+    const chat = database.getChat(chatId);
+    await telegram.answerCallbackQuery(query.id, "Tasdiqlash kerak");
+    await telegram.editMessage(
+      query.message,
+      `⚠️ <b>${escapeHtml(chat?.title ?? chatId)}</b> guruhidagi barcha ballar o‘chirilsinmi?`,
+      { inline_keyboard: [[
+        { text: "❌ Yo‘q", callback_data: `admin:group:${chatId}` },
+        { text: "🧹 Ha", callback_data: `admin:gclearconfirm:${chatId}` }
+      ]] }
+    );
+    return;
+  }
+
+  if (action === "gclearconfirm") {
+    const removed = database.clearChat(chatId);
+    console.log(`Admin ${query.from.id} chat ${chatId} bazasini tozaladi:`, removed);
+    await telegram.answerCallbackQuery(query.id, "Guruh tozalandi");
+    await telegram.editMessage(
+      query.message,
+      `🧹 <b>${removed.players}</b> a’zo va <b>${removed.rolls}</b> natija o‘chirildi.`,
+      groupMenu(chatId)
+    );
+    return;
+  }
+
+  await telegram.answerCallbackQuery(query.id, "Noma’lum buyruq");
 }
 
 async function handleMessage(message) {
@@ -104,6 +282,11 @@ async function handleMessage(message) {
     displayName: displayName(user),
     username: user.username
   };
+  database.rememberChat(
+    message.chat.id,
+    message.chat.title || displayName(user),
+    message.chat.type || "unknown"
+  );
   let response;
 
   switch (command) {

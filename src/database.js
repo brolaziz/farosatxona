@@ -16,6 +16,13 @@ export class FarosatDatabase {
 
   migrate() {
     this.db.exec(`
+      CREATE TABLE IF NOT EXISTS chats (
+        chat_id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        type TEXT NOT NULL,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+
       CREATE TABLE IF NOT EXISTS players (
         chat_id TEXT NOT NULL,
         user_id TEXT NOT NULL,
@@ -43,6 +50,17 @@ export class FarosatDatabase {
       CREATE INDEX IF NOT EXISTS idx_players_chat_score
       ON players(chat_id, grams DESC, updated_at ASC);
     `);
+  }
+
+  rememberChat(chatId, title, type) {
+    this.db.prepare(`
+      INSERT INTO chats (chat_id, title, type)
+      VALUES (?, ?, ?)
+      ON CONFLICT(chat_id) DO UPDATE SET
+        title = excluded.title,
+        type = excluded.type,
+        updated_at = CURRENT_TIMESTAMP
+    `).run(String(chatId), title, type);
   }
 
   play({ chatId, userId, displayName, username, playDate, random = Math.random }) {
@@ -117,6 +135,24 @@ export class FarosatDatabase {
     `).all(String(chatId), limit);
   }
 
+  getChat(chatId) {
+    return this.db.prepare("SELECT * FROM chats WHERE chat_id = ?").get(String(chatId));
+  }
+
+  listChats(limit = 20) {
+    return this.db.prepare(`
+      SELECT c.chat_id, c.title, c.type, c.updated_at,
+        COUNT(p.user_id) AS players,
+        COALESCE(SUM(p.grams), 0) AS grams,
+        COALESCE(SUM(p.plays), 0) AS plays
+      FROM chats c
+      LEFT JOIN players p ON p.chat_id = c.chat_id
+      GROUP BY c.chat_id
+      ORDER BY c.updated_at DESC
+      LIMIT ?
+    `).all(limit);
+  }
+
   stats(chatId) {
     const chat = String(chatId);
     const chatStats = this.db.prepare(`
@@ -127,10 +163,49 @@ export class FarosatDatabase {
       FROM players WHERE chat_id = ?
     `).get(chat);
     const totalStats = this.db.prepare(`
-      SELECT COUNT(*) AS players, COUNT(DISTINCT chat_id) AS chats
-      FROM players
+      SELECT
+        (SELECT COUNT(*) FROM players) AS players,
+        (SELECT COUNT(*) FROM chats) AS chats,
+        (SELECT COALESCE(SUM(grams), 0) FROM players) AS grams,
+        (SELECT COALESCE(SUM(plays), 0) FROM players) AS plays
     `).get();
-    return { ...chatStats, totalPlayers: totalStats.players, totalChats: totalStats.chats };
+    return {
+      ...chatStats,
+      totalPlayers: totalStats.players,
+      totalChats: totalStats.chats,
+      totalGrams: totalStats.grams,
+      totalPlays: totalStats.plays
+    };
+  }
+
+  adjustPlayer(chatId, userId, delta) {
+    const chat = String(chatId);
+    const user = String(userId);
+    this.db.prepare(`
+      UPDATE players
+      SET grams = MAX(0, grams + ?), updated_at = CURRENT_TIMESTAMP
+      WHERE chat_id = ? AND user_id = ?
+    `).run(delta, chat, user);
+    return this.getPlayer(chat, user);
+  }
+
+  deletePlayer(chatId, userId) {
+    const chat = String(chatId);
+    const user = String(userId);
+    this.db.exec("BEGIN IMMEDIATE");
+    try {
+      const rolls = this.db.prepare(
+        "DELETE FROM daily_rolls WHERE chat_id = ? AND user_id = ?"
+      ).run(chat, user).changes;
+      const players = this.db.prepare(
+        "DELETE FROM players WHERE chat_id = ? AND user_id = ?"
+      ).run(chat, user).changes;
+      this.db.exec("COMMIT");
+      return { players, rolls };
+    } catch (error) {
+      this.db.exec("ROLLBACK");
+      throw error;
+    }
   }
 
   clearChat(chatId) {
@@ -139,6 +214,19 @@ export class FarosatDatabase {
     try {
       const rolls = this.db.prepare("DELETE FROM daily_rolls WHERE chat_id = ?").run(chat).changes;
       const players = this.db.prepare("DELETE FROM players WHERE chat_id = ?").run(chat).changes;
+      this.db.exec("COMMIT");
+      return { players, rolls };
+    } catch (error) {
+      this.db.exec("ROLLBACK");
+      throw error;
+    }
+  }
+
+  clearAllScores() {
+    this.db.exec("BEGIN IMMEDIATE");
+    try {
+      const rolls = this.db.prepare("DELETE FROM daily_rolls").run().changes;
+      const players = this.db.prepare("DELETE FROM players").run().changes;
       this.db.exec("COMMIT");
       return { players, rolls };
     } catch (error) {
