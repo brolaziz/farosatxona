@@ -7,7 +7,8 @@ import {
   formatLevels,
   formatProfile,
   formatRoll,
-  HELP_TEXT
+  HELP_TEXT,
+  mention
 } from "./messages.js";
 import { TelegramClient } from "./telegram.js";
 
@@ -128,7 +129,7 @@ async function handleMessage(message) {
       response = formatLevels();
       break;
     case "id":
-      response = `🪪 ${displayName(user)}, Telegram ID raqamingiz: <code>${user.id}</code>`;
+      response = `🪪 ${mention(user.id, displayName(user))}, Telegram ID raqamingiz: <code>${user.id}</code>`;
       break;
     case "admin":
       if (!isAdmin(user.id)) {
