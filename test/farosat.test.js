@@ -7,16 +7,17 @@ import { localDate, previousDate } from "../src/time.js";
 
 test("daraja chegaralari to‘g‘ri ishlaydi", () => {
   assert.equal(getLevel(0).key, "bronza");
-  assert.equal(getLevel(249).key, "kumush");
-  assert.equal(getLevel(250).key, "oltin");
-  assert.equal(getLevel(1500).key, "afsonaviy");
+  assert.equal(getLevel(199).key, "bronza");
+  assert.equal(getLevel(200).key, "kumush");
+  assert.equal(getLevel(400).key, "oltin");
+  assert.equal(getLevel(1000).key, "afsonaviy");
 });
 
 test("random natija musbat va manfiy bo‘la oladi", () => {
   const positive = rollFarosat(100, sequence([0, 0]));
   const negative = rollFarosat(100, sequence([0.99, 0]));
-  assert.equal(positive.delta, 10);
-  assert.equal(negative.delta, -4);
+  assert.equal(positive.delta, 1);
+  assert.equal(negative.delta, -1);
 });
 
 test("farosat noldan pastga tushmaydi", () => {
@@ -58,9 +59,10 @@ test("Telegram HTML matni himoyalanadi", () => {
 test("birinchi luqma Farosatxona uslubida yoziladi", () => {
   const roll = rollFarosat(0, sequence([0, 0]));
   const text = formatRoll({ userId: 1, displayName: "Ali", player: { streak: 1 }, roll }, () => 0);
-  assert.match(text, /Farosatxonadan/);
-  assert.match(text, /5 gramm farosat/);
-  assert.match(text, /Keyingi o‘sish — ertaga/);
+  assert.match(text, /Farosatxona sizga/);
+  assert.match(text, /\+1 g/);
+  assert.match(text, /Keyingi luqma ertaga/);
+  assert.doesNotMatch(text, /Bronza|Ketma-ket/);
 });
 
 test("takroriy urinish kunlik luqma berilganini aytadi", () => {

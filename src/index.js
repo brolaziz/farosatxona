@@ -17,7 +17,7 @@ const telegram = new TelegramClient(config.token);
 const controller = new AbortController();
 
 function displayName(user) {
-  return [user.first_name, user.last_name].filter(Boolean).join(" ") || user.username || "Noma’lum qahramon";
+  return user.first_name || user.username || "Noma’lum";
 }
 
 function commandFrom(text) {

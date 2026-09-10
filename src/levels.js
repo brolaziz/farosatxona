@@ -1,10 +1,10 @@
 export const LEVELS = Object.freeze([
-  { key: "bronza", name: "Bronza", emoji: "🥉", min: 0, positiveChance: 0.68, gain: [5, 28], loss: [3, 18] },
-  { key: "kumush", name: "Kumush", emoji: "🥈", min: 100, positiveChance: 0.72, gain: [10, 34], loss: [4, 20] },
-  { key: "oltin", name: "Oltin", emoji: "🥇", min: 250, positiveChance: 0.76, gain: [13, 42], loss: [5, 23] },
-  { key: "platina", name: "Platina", emoji: "💠", min: 500, positiveChance: 0.80, gain: [16, 52], loss: [6, 26] },
-  { key: "olmos", name: "Olmos", emoji: "💎", min: 900, positiveChance: 0.84, gain: [20, 65], loss: [7, 30] },
-  { key: "afsonaviy", name: "Afsonaviy", emoji: "👑", min: 1500, positiveChance: 0.88, gain: [25, 80], loss: [8, 35] }
+  { key: "bronza", name: "Bronza", emoji: "🥉", min: 0, positiveChance: 0.68, gain: [1, 10], loss: [1, 5] },
+  { key: "kumush", name: "Kumush", emoji: "🥈", min: 200, positiveChance: 0.72, gain: [2, 13], loss: [1, 7] },
+  { key: "oltin", name: "Oltin", emoji: "🥇", min: 400, positiveChance: 0.76, gain: [3, 16], loss: [2, 9] },
+  { key: "platina", name: "Platina", emoji: "💠", min: 600, positiveChance: 0.80, gain: [4, 20], loss: [3, 11] },
+  { key: "olmos", name: "Olmos", emoji: "💎", min: 800, positiveChance: 0.84, gain: [5, 25], loss: [4, 13] },
+  { key: "afsonaviy", name: "Afsonaviy", emoji: "👑", min: 1000, positiveChance: 0.88, gain: [6, 30], loss: [5, 15] }
 ]);
 
 export function getLevel(grams) {
