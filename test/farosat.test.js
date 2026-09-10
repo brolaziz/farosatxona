@@ -20,6 +20,15 @@ test("random natija musbat va manfiy bo‘la oladi", () => {
   assert.equal(negative.delta, -1);
 });
 
+test("Bronzada minus yoki nol ehtimoli 6 foiz", () => {
+  const positive = rollFarosat(100, sequence([0.939999, 0]));
+  const negative = rollFarosat(100, sequence([0.94, 0]));
+  const zero = rollFarosat(0, sequence([0.94, 0]));
+  assert.equal(positive.delta, 1);
+  assert.equal(negative.delta, -1);
+  assert.equal(zero.delta, 0);
+});
+
 test("farosat noldan pastga tushmaydi", () => {
   const result = rollFarosat(0, sequence([0.99, 0.99]));
   assert.equal(result.newGrams, 0);
