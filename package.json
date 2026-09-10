@@ -1,0 +1,15 @@
+{
+  "name": "farosatxona-bot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Farosatxona — Telegram guruhlari uchun kulgili kunlik farosat boti",
+  "type": "module",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "test": "node --test"
+  }
+}
