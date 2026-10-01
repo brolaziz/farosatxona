@@ -12,7 +12,7 @@ import {
 export const partial = "farosatxona";
 
 export default defineRailway((context) => {
-  const data = volume("farosat-data", { sizeMB: 500 });
+  const data = volume("farosatxona-volume", { sizeMB: 500 });
   const app = service("farosatxona", {
     source: github("brolaziz/farosatxona", { branch: "main" }),
     // Railway discovers Dockerfile automatically. Its public Builder enum
