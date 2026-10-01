@@ -4,7 +4,9 @@ Bot va Mini App bitta servisda ishlaydi. SQLite va zaxiralar `/app/data` volume�
 
 ## Tayyor konfiguratsiya
 
-`.railway/railway.ts` Railway’ning rasmiy `railway/iac` SDK’sidan foydalanadi. Unda Dockerfile, `/health`, qayta ishga tushirish, 30 soniyali to‘xtash muddati, bitta nusxa va 512 MB boshlang‘ich volume belgilangan. Bot tokeni va shaxsiy sozlamalar `preserve()` orqali serverda saqlanadi; faylga yozilmaydi.
+`.railway/railway.ts` Railway’ning rasmiy `railway/iac` SDK’sidan foydalanadi. Unda Dockerfile, `/health`, qayta ishga tushirish, 30 soniyali to‘xtash muddati, bitta nusxa va 500 MB boshlang‘ich volume belgilangan. Bot tokeni va admin ID `preserve()` orqali serverda saqlanadi; faylga yozilmaydi. Production domeni va yordam manzili konfiguratsiyada belgilangan.
+
+`builder: "RAILPACK"` Railway public API’ning haqiqiy `Builder` enum’iga mos. Railway repozitoriydagi Dockerfile’ni avtomatik aniqlab Docker build qiladi; bu API versiyasiga `builder: "DOCKERFILE"` yuborish rad etiladi.
 
 `partial = "farosatxona"` faqat ushbu repozitoriyga tegishli servis va volume’ni boshqaradi. Boshqa repozitoriylar servislariga egalik olinmaydi. Mavjud Farosatxona servisining nomi boshqacha bo‘lsa, konfiguratsiya va resurs bog‘lanishini avval moslang. Har safar `config plan` natijasida o‘chirish amali yo‘qligini tekshiring.
 

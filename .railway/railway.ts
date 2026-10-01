@@ -12,10 +12,12 @@ import {
 export const partial = "farosatxona";
 
 export default defineRailway((context) => {
-  const data = volume("farosat-data", { sizeMB: 512 });
+  const data = volume("farosat-data", { sizeMB: 500 });
   const app = service("farosatxona", {
     source: github("brolaziz/farosatxona", { branch: "main" }),
-    build: { builder: "DOCKERFILE", dockerfilePath: "Dockerfile" },
+    // Railway discovers Dockerfile automatically. Its public Builder enum
+    // accepts RAILPACK; DOCKERFILE is not accepted by this API version.
+    build: { builder: "RAILPACK", dockerfilePath: "Dockerfile" },
     deploy: {
       startCommand: "node src/index.js",
       numReplicas: 1,
