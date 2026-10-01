@@ -2,7 +2,11 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { FarosatDatabase } from "../src/database.js";
 import { getLevel, rollFarosat } from "../src/levels.js";
-import { escapeHtml, formatAlreadyPlayed, formatRoll } from "../src/messages.js";
+import {
+  escapeHtml,
+  formatAlreadyPlayed,
+  formatRoll,
+} from "../src/messages.js";
 import { localDate, previousDate } from "../src/time.js";
 
 test("daraja chegaralari to‘g‘ri ishlaydi", () => {
@@ -37,7 +41,13 @@ test("farosat noldan pastga tushmaydi", () => {
 
 test("bir foydalanuvchi bir kunda faqat bir marta o‘ynaydi", () => {
   const db = new FarosatDatabase(":memory:");
-  const input = { chatId: -100, userId: 7, displayName: "Ali", playDate: "2026-09-10", random: sequence([0, 0]) };
+  const input = {
+    chatId: -100,
+    userId: 7,
+    displayName: "Ali",
+    playDate: "2026-09-10",
+    random: sequence([0, 0]),
+  };
   const first = db.play(input);
   const second = db.play(input);
   assert.equal(first.alreadyPlayed, false);
@@ -48,7 +58,12 @@ test("bir foydalanuvchi bir kunda faqat bir marta o‘ynaydi", () => {
 
 test("ketma-ket kunlar seriya beradi, tanaffus esa uni buzadi", () => {
   const db = new FarosatDatabase(":memory:");
-  const base = { chatId: -100, userId: 8, displayName: "Vali", random: sequence([0, 0, 0, 0]) };
+  const base = {
+    chatId: -100,
+    userId: 8,
+    displayName: "Vali",
+    random: sequence([0, 0, 0, 0]),
+  };
   assert.equal(db.play({ ...base, playDate: "2026-09-08" }).player.streak, 1);
   assert.equal(db.play({ ...base, playDate: "2026-09-09" }).player.streak, 2);
   assert.equal(db.play({ ...base, playDate: "2026-09-11" }).player.streak, 1);
@@ -57,7 +72,12 @@ test("ketma-ket kunlar seriya beradi, tanaffus esa uni buzadi", () => {
 
 test("admin statistikani ko‘radi va faqat tanlangan guruhni tozalaydi", () => {
   const db = new FarosatDatabase(":memory:");
-  const common = { userId: 9, displayName: "Ali", playDate: "2026-09-10", random: sequence([0, 0]) };
+  const common = {
+    userId: 9,
+    displayName: "Ali",
+    playDate: "2026-09-10",
+    random: sequence([0, 0]),
+  };
   db.rememberChat(-100, "Birinchi guruh", "supergroup");
   db.rememberChat(-200, "Ikkinchi guruh", "group");
   db.play({ ...common, chatId: -100 });
@@ -73,12 +93,24 @@ test("admin statistikani ko‘radi va faqat tanlangan guruhni tozalaydi", () => 
 test("admin guruh, a’zo va barcha ballarni boshqara oladi", () => {
   const db = new FarosatDatabase(":memory:");
   db.rememberChat(-100, "Sinov guruhi", "supergroup");
-  db.play({ chatId: -100, userId: 1, displayName: "Ali", playDate: "2026-09-10", random: sequence([0, 0]) });
+  db.play({
+    chatId: -100,
+    userId: 1,
+    displayName: "Ali",
+    playDate: "2026-09-10",
+    random: sequence([0, 0]),
+  });
   assert.equal(db.listChats()[0].title, "Sinov guruhi");
   assert.equal(db.adjustPlayer(-100, 1, 10).grams, 11);
   assert.equal(db.adjustPlayer(-100, 1, -50).grams, 0);
   assert.deepEqual(db.deletePlayer(-100, 1), { players: 1, rolls: 1 });
-  db.play({ chatId: -100, userId: 2, displayName: "Vali", playDate: "2026-09-10", random: sequence([0, 0]) });
+  db.play({
+    chatId: -100,
+    userId: 2,
+    displayName: "Vali",
+    playDate: "2026-09-10",
+    random: sequence([0, 0]),
+  });
   assert.deepEqual(db.clearAllScores(), { players: 1, rolls: 1 });
   assert.equal(db.listChats().length, 1);
   db.close();
@@ -91,12 +123,18 @@ test("sana timezone bo‘yicha hisoblanadi", () => {
 });
 
 test("Telegram HTML matni himoyalanadi", () => {
-  assert.equal(escapeHtml('<Ali & "Vali">'), "&lt;Ali &amp; &quot;Vali&quot;&gt;");
+  assert.equal(
+    escapeHtml('<Ali & "Vali">'),
+    "&lt;Ali &amp; &quot;Vali&quot;&gt;",
+  );
 });
 
 test("birinchi luqma Farosatxona uslubida yoziladi", () => {
   const roll = rollFarosat(0, sequence([0, 0]));
-  const text = formatRoll({ userId: 1, displayName: "Ali", player: { streak: 1 }, roll }, () => 0);
+  const text = formatRoll(
+    { userId: 1, displayName: "Ali", player: { streak: 1 }, roll },
+    () => 0,
+  );
   assert.match(text, /Farosatxona sizga/);
   assert.match(text, /\+1 g/);
   assert.match(text, /Keyingi luqma ertaga/);
@@ -104,7 +142,10 @@ test("birinchi luqma Farosatxona uslubida yoziladi", () => {
 });
 
 test("takroriy urinish kunlik luqma berilganini aytadi", () => {
-  const text = formatAlreadyPlayed({ userId: 1, displayName: "Ali", player: { grams: 8 } }, () => 0);
+  const text = formatAlreadyPlayed(
+    { userId: 1, displayName: "Ali", player: { grams: 8 } },
+    () => 0,
+  );
   assert.match(text, /bugungi luqmangiz berilgan/);
   assert.match(text, /Ko‘p bosishdan farosat ko‘paymaydi/);
 });

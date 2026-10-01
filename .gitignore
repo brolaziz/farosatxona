@@ -5,4 +5,8 @@ data/
 *.db-wal
 node_modules/
 npm-debug.log*
-
+dist/
+*.bak
+coverage/
+.railway/*.lock
+.railway/*plan*.json
