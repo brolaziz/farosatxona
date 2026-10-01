@@ -1,0 +1,37 @@
+{
+  "tool": "Built-in image_gen",
+  "useCase": "stylized-concept",
+  "reference": "https://bulldrop.uz/uz",
+  "assets": [
+    {
+      "name": "idrok",
+      "file": "web/assets/cases/idrok.webp",
+      "prompt": "Use case: stylized-concept. Asset type: transparent game shop product thumbnail for Farosatxona Telegram Mini App. Create ONE original premium 3D collectible case product render. A compact futuristic gunmetal treasure chest with a rounded rectangular front panel bearing a small abstract brain emblem, no letters or numbers. Hinged open, three-quarter frontal perspective, centered, the entire chest and floating contents visible with generous 12% transparent padding, polished cinematic game CGI, crisp intricate detail readable at 250px, clean translucent crystals, dramatic luminous rim lighting and restrained energy wisps. The chest occupies lower half, featured object upper half. Subject and palette: a huge faceted sapphire blue crystal, brilliant ice shards and cool cyan energy, sapphire blue metal trims. Actual transparent background, no floor, no rectangular backdrop, no text, no watermark, no brand logos, no people, no weapons. Match a coherent six-item collectible series."
+    },
+    {
+      "name": "zakovat",
+      "file": "web/assets/cases/zakovat.webp",
+      "prompt": "Use case: stylized-concept. Asset type: transparent game shop product thumbnail for Farosatxona Telegram Mini App. Create ONE original premium 3D collectible case product render. A compact futuristic gunmetal treasure chest with a rounded rectangular front panel bearing a small abstract brain emblem, no letters or numbers. Hinged open, three-quarter frontal perspective, centered, the entire chest and floating contents visible with generous 12% transparent padding, polished cinematic game CGI, crisp intricate detail readable at 250px, clean translucent crystals, dramatic luminous rim lighting and restrained energy wisps. The chest occupies lower half, featured object upper half. Subject and palette: a huge faceted ruby red crystal, smaller floating red crystals and rose energy, burgundy metal trims. Actual transparent background, no floor, no rectangular backdrop, no text, no watermark, no brand logos, no people, no weapons. Match a coherent six-item collectible series."
+    },
+    {
+      "name": "tafakkur",
+      "file": "web/assets/cases/tafakkur.webp",
+      "prompt": "Use case: stylized-concept. Asset type: transparent game shop product thumbnail for Farosatxona Telegram Mini App. Create ONE original premium 3D collectible case product render. A compact futuristic gunmetal treasure chest with a rounded rectangular front panel bearing a small abstract brain emblem, no letters or numbers. Hinged open, three-quarter frontal perspective, centered, the entire chest and floating contents visible with generous 12% transparent padding, polished cinematic game CGI, crisp intricate detail readable at 250px, clean translucent crystals, dramatic luminous rim lighting and restrained energy wisps. The chest occupies lower half, featured object upper half. Subject and palette: a huge faceted emerald green crystal, rich jade crystalline growths and green mist, emerald metal trims. Actual transparent background, no floor, no rectangular backdrop, no text, no watermark, no brand logos, no people, no weapons. Match a coherent six-item collectible series."
+    },
+    {
+      "name": "zehn",
+      "file": "web/assets/cases/zehn.webp",
+      "prompt": "Use case: stylized-concept. Asset type: transparent game shop product thumbnail for Farosatxona Telegram Mini App. Create ONE original premium 3D collectible case product render. A compact futuristic gunmetal treasure chest with a rounded rectangular front panel bearing a small abstract brain emblem, no letters or numbers. Hinged open, three-quarter frontal perspective, centered, the entire chest and floating contents visible with generous 12% transparent padding, polished cinematic game CGI, crisp intricate detail readable at 250px, clean translucent crystals, dramatic luminous rim lighting and restrained energy wisps. The chest occupies lower half, featured object upper half. Subject and palette: a luminous blue energy brain with branching neural lightning suspended above the open chest, electric blue metal trims. Actual transparent background, no floor, no rectangular backdrop, no text, no watermark, no brand logos, no people, no weapons. Match a coherent six-item collectible series."
+    },
+    {
+      "name": "donolik",
+      "file": "web/assets/cases/donolik.webp",
+      "prompt": "Use case: stylized-concept. Asset type: transparent game shop product thumbnail for Farosatxona Telegram Mini App. Create ONE original premium 3D collectible case product render. A compact futuristic gunmetal treasure chest with a rounded rectangular front panel bearing a small abstract brain emblem, no letters or numbers. Hinged open, three-quarter frontal perspective, centered, the entire chest and floating contents visible with generous 12% transparent padding, polished cinematic game CGI, crisp intricate detail readable at 250px, clean translucent crystals, dramatic luminous rim lighting and restrained energy wisps. The chest occupies lower half, featured object upper half. Subject and palette: a violet black-hole sphere with glowing magenta accretion rings and small orbiting meteorites, violet metal trims. Actual transparent background, no floor, no rectangular backdrop, no text, no watermark, no brand logos, no people, no weapons. Match a coherent six-item collectible series."
+    },
+    {
+      "name": "daholik",
+      "file": "web/assets/cases/daholik.webp",
+      "prompt": "Use case: stylized-concept. Asset type: transparent game shop product thumbnail for Farosatxona Telegram Mini App. Create ONE original premium 3D collectible case product render. A compact futuristic gunmetal treasure chest with a rounded rectangular front panel bearing a small abstract brain emblem, no letters or numbers. Hinged open, three-quarter frontal perspective, centered, the entire chest and floating contents visible with generous 12% transparent padding, polished cinematic game CGI, crisp intricate detail readable at 250px, clean translucent crystals, dramatic luminous rim lighting and restrained energy wisps. The chest occupies lower half, featured object upper half. Subject and palette: a spectacular huge prismatic diamond with colorful crystalline shards and aurora rays, iridescent metal trims. Actual transparent background, no floor, no rectangular backdrop, no text, no watermark, no brand logos, no people, no weapons. Match a coherent six-item collectible series."
+    }
+  ]
+}

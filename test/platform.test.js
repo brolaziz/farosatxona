@@ -1,7 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createHmac } from "node:crypto";
-import { mkdtempSync, readdirSync, rmSync } from "node:fs";
+import {
+  mkdtempSync,
+  readdirSync,
+  rmSync,
+  mkdirSync,
+  copyFileSync,
+  readFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname, resolve, basename } from "node:path";
 import { FarosatDatabase } from "../src/database.js";
@@ -380,6 +387,28 @@ async function webFixture(t) {
   };
   return { ...fixtureData, app, login };
 }
+
+test("keys WebP rasmlari ochiq, to‘g‘ri MIME va immutable kesh bilan uzatiladi", async (t) => {
+  const { app } = await webFixture(t);
+  const source = resolve("web/assets/cases/idrok.webp");
+  const name = `case-regression-${process.pid}.webp`;
+  const target = resolve("dist/assets", name);
+  mkdirSync(dirname(target), { recursive: true });
+  copyFileSync(source, target);
+  t.after(() => rmSync(target, { force: true }));
+  const response = await app.inject({ url: `/assets/${name}` });
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.headers["content-type"], "image/webp");
+  assert.equal(
+    response.headers["cache-control"],
+    "public, max-age=31536000, immutable",
+  );
+  assert.deepEqual(response.rawPayload, readFileSync(source));
+  assert.equal(
+    (await app.inject({ url: "/assets/not-allowed.exe" })).statusCode,
+    404,
+  );
+});
 test("production preview login yo‘q; qalbaki user/admin kirishi va autentifikatsiyasiz API yopiq", async (t) => {
   const { app, login } = await webFixture(t);
   const bad = await app.inject({

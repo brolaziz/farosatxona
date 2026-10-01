@@ -634,7 +634,7 @@ export async function createServer(
     const file = request.params.file;
     if (
       basename(file) !== file ||
-      !/^[\w.\-]+\.(js|css|svg|png|woff2)$/.test(file)
+      !/^[\w.\-]+\.(js|css|svg|png|webp|woff2)$/.test(file)
     )
       throw new HttpError(404, "Fayl topilmadi.");
     const types = {
@@ -642,6 +642,7 @@ export async function createServer(
       css: "text/css",
       svg: "image/svg+xml",
       png: "image/png",
+      webp: "image/webp",
       woff2: "font/woff2",
     };
     reply

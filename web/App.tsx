@@ -47,6 +47,14 @@ import {
   type Session,
 } from "./api";
 import "./style.css";
+import "@fontsource-variable/nunito";
+import "./experience.css";
+import {
+  PackageCarousel,
+  CaseCatalog,
+  CaseArtwork,
+  PACKAGES,
+} from "./PackageCarousel";
 
 declare global {
   interface Window {
@@ -90,7 +98,7 @@ const roleLabels: Row = {
 const nav = [
   {
     id: "dashboard",
-    title: "Umumiy holat",
+    title: "Boshqaruv paneli",
     icon: LayoutDashboard,
     permission: "read",
   },
@@ -269,7 +277,10 @@ export function App() {
     [debounced, setDebounced] = useState(""),
     [offset, setOffset] = useState(0),
     [filter, setFilter] = useState(""),
-    [days, setDays] = useState(30);
+    [days, setDays] = useState(7);
+  const [quickSearch, setQuickSearch] = useState("");
+  const quickSearchRef = useRef<HTMLInputElement>(null);
+  const checkoutRef = useRef<HTMLElement>(null);
   const [modal, setModal] = useState<Row | null>(null),
     [form, setForm] = useState<Row>({}),
     [detail, setDetail] = useState<Row | null>(null);
@@ -307,9 +318,9 @@ export function App() {
       const tg = window.Telegram?.WebApp;
       tg?.ready();
       tg?.expand();
-      tg?.setHeaderColor("#081426");
-      tg?.setBackgroundColor("#081426");
-      tg?.setBottomBarColor?.("#081426");
+      tg?.setHeaderColor("#161718");
+      tg?.setBackgroundColor("#161718");
+      tg?.setBottomBarColor?.("#161718");
       const result = await post("session", {
         initData: tg?.initData || "",
         mode,
@@ -349,6 +360,20 @@ export function App() {
     const timer = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(timer);
   }, []);
+  useEffect(() => {
+    const focusSearch = (event: KeyboardEvent) => {
+      if (
+        admin &&
+        (event.metaKey || event.ctrlKey) &&
+        event.key.toLowerCase() === "k"
+      ) {
+        event.preventDefault();
+        quickSearchRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", focusSearch);
+    return () => window.removeEventListener("keydown", focusSearch);
+  }, [admin]);
   const load = useCallback(async () => {
     if (!session) return;
     const sequence = ++loadSequence.current;
@@ -513,7 +538,7 @@ export function App() {
     ? nav.find((n) => n.id === tab)?.title
     : userNav.find((n) => n.id === tab)?.title;
   const descriptions: Row = {
-    dashboard: "Farosatxonaning bugungi yurak urishi.",
+    dashboard: "Bugungi farosat, xaridlar va harakat bir ko‘rinishda.",
     groups: "Har bir guruh, bitta boshqaruv markazida.",
     players: "Farosat egalari va ularning natijalari.",
     orders: "Har bir Star va har bir gramm hisobda.",
@@ -626,6 +651,27 @@ export function App() {
             </div>
             <ShieldCheck size={17} />
           </div>
+          <div className="sidebar-clock">
+            <time>
+              {new Intl.DateTimeFormat("uz-UZ", {
+                timeZone: "Asia/Tashkent",
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false,
+              }).format(now)}
+            </time>
+            <span>
+              {new Intl.DateTimeFormat("uz-UZ", {
+                timeZone: "Asia/Tashkent",
+                day: "numeric",
+                month: "long",
+                weekday: "long",
+              }).format(now)}
+            </span>
+            <small>
+              Toshkent vaqti <i />
+            </small>
+          </div>
         </div>
       </aside>
       <div className="main">
@@ -638,9 +684,31 @@ export function App() {
             >
               <Menu size={20} />
             </button>
-            <span>Farosatxona</span>
-            <span className="slash">/</span>
-            <b>{admin ? "Boshqaruv" : heading}</b>
+            {!admin && <b>{heading}</b>}
+            {admin && (
+              <form
+                className="quick-search"
+                role="search"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  changeTab("players");
+                  setQ(quickSearch.trim());
+                  setDebounced(quickSearch.trim());
+                }}
+              >
+                <button type="submit" aria-label="Qidiruvni boshlash">
+                  <Search size={17} />
+                </button>
+                <input
+                  ref={quickSearchRef}
+                  aria-label="Foydalanuvchini tezkor qidirish"
+                  placeholder="Ism, username yoki ID qidiring"
+                  value={quickSearch}
+                  onChange={(e) => setQuickSearch(e.target.value)}
+                />
+                <kbd>⌘ K</kbd>
+              </form>
+            )}
           </div>
           <div className="top-right">
             {session.preview && (
@@ -661,6 +729,10 @@ export function App() {
               {session.preview ? "DEMO" : "ULANGAN"}
             </span>
             <Avatar name={session.user.first_name} size="small" />
+            <div className="header-account">
+              <b>{session.user.first_name}</b>
+              <small>{roleLabels[session.role]}</small>
+            </div>
           </div>
         </header>
         <main>
@@ -766,6 +838,7 @@ export function App() {
                   value={format(data.stats.uniqueUsers)}
                   icon={Users}
                   note={format(data.stats.totalPlayers) + " ta guruh profili"}
+                  accent
                 />
                 <Metric
                   title="Guruhlar"
@@ -784,7 +857,6 @@ export function App() {
                   value={format(data.stats.stars)}
                   icon={Star}
                   note={format(data.stats.purchases) + " ta bajarilgan xarid"}
-                  accent
                 />
               </div>
               <div className="dashboard-grid">
@@ -889,42 +961,42 @@ export function App() {
                     Toshkent vaqti bo‘yicha hisoblanadi
                   </div>
                 </section>
-              </div>
-              <section className="panel">
-                <div className="panel-head">
-                  <div>
-                    <h2>So‘nggi o‘zgarishlar</h2>
-                    <p>Boshqaruvdagi oxirgi amallar</p>
+                <section className="panel dashboard-activity">
+                  <div className="panel-head">
+                    <div>
+                      <h2>So‘nggi o‘zgarishlar</h2>
+                      <p>Boshqaruvdagi oxirgi amallar</p>
+                    </div>
+                    <button
+                      className="text-btn"
+                      onClick={() => changeTab("audit")}
+                    >
+                      Barchasini ko‘rish <ArrowRight size={15} />
+                    </button>
                   </div>
-                  <button
-                    className="text-btn"
-                    onClick={() => changeTab("audit")}
-                  >
-                    Barchasini ko‘rish <ArrowRight size={15} />
-                  </button>
-                </div>
-                {data.recent.length ? (
-                  <div className="activity-list">
-                    {data.recent.map((row: Row) => (
-                      <div className="activity-row" key={row.id}>
-                        <span className="activity-icon">
-                          <ScrollText size={17} />
-                        </span>
-                        <div>
-                          <b>{row.action}</b>
-                          <small>
-                            Admin {row.actor}
-                            {row.chat_id ? " · Guruh " + row.chat_id : ""}
-                          </small>
+                  {data.recent.length ? (
+                    <div className="activity-list">
+                      {data.recent.map((row: Row) => (
+                        <div className="activity-row" key={row.id}>
+                          <span className="activity-icon">
+                            <ScrollText size={17} />
+                          </span>
+                          <div>
+                            <b>{row.action}</b>
+                            <small>
+                              Admin {row.actor}
+                              {row.chat_id ? " · Guruh " + row.chat_id : ""}
+                            </small>
+                          </div>
+                          <time>{date(row.created_at)}</time>
                         </div>
-                        <time>{date(row.created_at)}</time>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <Empty detail="Admin amallari shu yerda qayd etiladi." />
-                )}
-              </section>
+                      ))}
+                    </div>
+                  ) : (
+                    <Empty detail="Admin amallari shu yerda qayd etiladi." />
+                  )}
+                </section>
+              </div>
             </>
           )}
           {admin && ["groups", "players", "orders", "audit"].includes(tab) && (
@@ -1872,7 +1944,7 @@ export function App() {
                   </div>
                 </div>
                 <div className="brain-art">
-                  <Brain size={106} strokeWidth={1} />
+                  <CaseArtwork eager />
                   <span />
                   <i />
                 </div>
@@ -2092,32 +2164,30 @@ export function App() {
           )}
           {!admin && tab === "shop" && group && (
             <div className="shop-layout">
-              <section className="panel market-card">
+              <section className="market-card">
                 <div className="market-heading">
                   <span className="market-icon">
                     <ShoppingBag size={27} />
                   </span>
                   <Badge status="credited">1 ⭐ = 1 g</Badge>
                 </div>
-                <h2>Farosat ombori</h2>
-                <p>Guruhingizga ozgina qo‘shimcha aql.</p>
-                <div className="packages">
-                  {[10, 25, 50, 100, 250, 500].map((n) => (
-                    <button
-                      key={n}
-                      className={grams === n ? "selected" : ""}
-                      onClick={() => setGrams(n)}
-                    >
-                      <b>
-                        {n}
-                        <small>g</small>
-                      </b>
-                      <span>⭐ {n} Stars</span>
-                      {n === 100 && <i>OMMABOP</i>}
-                    </button>
-                  ))}
-                </div>
-                <label className="field">
+                <CaseCatalog
+                  grams={grams}
+                  onChange={(amount) => {
+                    setGrams(amount);
+                    if (window.matchMedia?.("(max-width: 1000px)")?.matches) {
+                      checkoutRef.current?.scrollIntoView({
+                        behavior: window.matchMedia(
+                          "(prefers-reduced-motion: reduce)",
+                        ).matches
+                          ? "auto"
+                          : "smooth",
+                        block: "start",
+                      });
+                    }
+                  }}
+                />
+                <label className="field custom-amount">
                   <span>O‘zingiz miqdor kiriting</span>
                   <div className="amount-input">
                     <input
@@ -2136,9 +2206,15 @@ export function App() {
                   <p>Xarid farosati kunlik minus va resetdan himoyalangan.</p>
                 </div>
               </section>
-              <section className="panel checkout-card">
+              <section className="panel checkout-card" ref={checkoutRef}>
+                <div className="checkout-preview">
+                  <PackageCarousel grams={grams} onChange={setGrams} />
+                </div>
                 <span className="eyebrow">XARID TAFSILOTLARI</span>
-                <h2>Hammasi aniq.</h2>
+                <h2>
+                  {PACKAGES.find((pack) => pack.grams === grams)?.name ||
+                    "Sizning tanlovingiz"}
+                </h2>
                 <div className="checkout-row">
                   <span>Guruh</span>
                   <b>{selectedChat?.title}</b>
@@ -2192,7 +2268,8 @@ export function App() {
                   onClick={() => purchase()}
                 >
                   <Star size={17} />
-                  {actionBusy ? "Tayyorlanmoqda…" : "Stars orqali xarid qilish"}
+                  {actionBusy ? "Tayyorlanmoqda…" : "Sotib olish"}
+                  <span className="purchase-price">{format(grams)} Stars</span>
                   <ArrowRight size={16} />
                 </button>
                 <p className="checkout-help">

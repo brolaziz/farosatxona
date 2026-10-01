@@ -1,5 +1,5 @@
 :root {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI Variable", "Segoe UI", sans-serif;
+  font-family: "Nunito Variable", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: var(--text);
   background: var(--background);
   font-synthesis: none;
@@ -8,26 +8,26 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  --background: #081426;
-  --text: #f7faff;
-  --secondary: #d3e0f3;
-  --muted: #a8bad3;
-  --surface-low: #0c1b30;
-  --surface: #102139;
-  --surface-raised: #172d4a;
-  --surface-hover: #213c5c;
-  --border: rgb(210 228 255 / 12%);
-  --accent: #256cdd;
-  --accent-light: #a9ceff;
-  --accent-border: rgb(126 181 255 / 32%);
-  --accent-soft: rgb(89 155 255 / 13%);
-  --success: #8de0bb;
-  --success-soft: rgb(60 180 128 / 12%);
-  --success-border: rgb(117 218 173 / 25%);
-  --danger: #ffb3bc;
-  --danger-soft: rgb(244 101 124 / 12%);
-  --danger-border: rgb(255 152 172 / 25%);
-  --card-shadow: 0 10px 32px rgb(2 8 20 / 15%);
+  --background: #161718;
+  --text: #f5f5fa;
+  --secondary: #d0d1d8;
+  --muted: #a1a4ad;
+  --surface-low: #191a1c;
+  --surface: #1b1c1f;
+  --surface-raised: #242528;
+  --surface-hover: #2b2d33;
+  --border: #303238;
+  --accent: #326add;
+  --accent-light: #80aaff;
+  --accent-border: #466cab;
+  --accent-soft: #24334e;
+  --success: #80d6a9;
+  --success-soft: #20352b;
+  --success-border: #345443;
+  --danger: #ff9ca9;
+  --danger-soft: #3a242b;
+  --danger-border: #6b3844;
+  --card-shadow: 0 8px 24px rgb(0 0 0 / 10%);
   color-scheme: dark;
 }
 * {
