@@ -40,9 +40,9 @@ export default defineRailway((context) => {
       RAILWAY_RUN_UID: "0",
       BOT_TOKEN: preserve(),
       ADMIN_IDS: preserve(),
-      WEB_APP_URL: preserve(),
-      SUPPORT_URL: preserve(),
-      BOT_USERNAME: preserve(),
+      WEB_APP_URL: "https://farosatxona-production.up.railway.app",
+      SUPPORT_URL: "https://t.me/coderceo",
+      BOT_USERNAME: "farosatxonabot",
     },
   });
 
