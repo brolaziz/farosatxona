@@ -8,19 +8,21 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  --background: #161718;
-  --text: #f5f5fa;
-  --secondary: #d0d1d8;
-  --muted: #a1a4ad;
-  --surface-low: #191a1c;
-  --surface: #1b1c1f;
-  --surface-raised: #242528;
-  --surface-hover: #2b2d33;
-  --border: #303238;
-  --accent: #326add;
-  --accent-light: #80aaff;
-  --accent-border: #466cab;
-  --accent-soft: #24334e;
+  --background: #171717;
+  --text: #f5f5f5;
+  --secondary: #d3d3d3;
+  --muted: #a6a6a6;
+  --surface-low: #1b1b1b;
+  --surface: #1e1e1e;
+  --surface-raised: #272727;
+  --surface-hover: #303030;
+  --border: #343434;
+  --accent: #b94f29;
+  --accent-hover: #c45229;
+  --accent-light: #f5b08a;
+  --accent-border: #8a513b;
+  --accent-soft: #34271f;
+  --accent-gradient: linear-gradient(120deg, #b8421d, #94371e);
   --success: #80d6a9;
   --success-soft: #20352b;
   --success-border: #345443;
@@ -36,7 +38,7 @@
 body {
   margin: 0;
   min-width: 320px;
-  background: radial-gradient(ellipse at 75% 0%, rgb(45 91 157 / 12%), transparent 50%), var(--background);
+  background: var(--background);
 }
 button,
 input,
@@ -176,7 +178,7 @@ code {
 .sidebar {
   width: 246px;
   min-width: 246px;
-  background: rgb(10 25 45 / 92%);
+  background: rgb(30 30 30 / 92%);
   border-right: 1px solid var(--border);
   position: fixed;
   inset: 0 auto 0 0;
@@ -201,7 +203,7 @@ code {
   height: 40px;
   color: var(--text);
   border: 1px solid var(--accent-border);
-  background: linear-gradient(145deg, #447dd2, #254e88);
+  background: var(--accent-gradient);
   border-radius: 14px;
 }
 .brand strong {
@@ -322,7 +324,7 @@ code {
   display: inline-block;
   background: var(--accent);
   border-radius: 50%;
-  box-shadow: 0 0 9px rgb(2 8 20 / 20%);
+  box-shadow: 0 0 9px rgb(0 0 0 / 20%);
 }
 .account {
   border-top: 1px solid var(--border);
@@ -379,7 +381,7 @@ code {
   align-items: center;
   justify-content: space-between;
   padding: 0 36px;
-  background: rgb(8 20 38 / 84%);
+  background: rgb(30 30 30 / 94%);
   position: sticky;
   top: 0;
   z-index: 25;
@@ -475,10 +477,10 @@ code {
   background: var(--accent);
   color: #fff;
   border-color: transparent;
-  box-shadow: 0 4px 14px rgb(28 87 190 / 18%);
+  box-shadow: 0 4px 14px rgb(90 45 25 / 18%);
 }
 .primary:hover:not(:disabled) {
-  background: #347aec;
+  background: var(--accent-hover);
   transform: translateY(-1px);
 }
 .secondary {
@@ -568,7 +570,7 @@ code {
   margin-top: 11px;
 }
 .accent-metric {
-  background: linear-gradient(135deg, #18375d, #10243e);
+  background: var(--accent-gradient);
   border-color: var(--accent-border);
 }
 .accent-metric strong,
@@ -675,7 +677,7 @@ code {
 }
 .bar-slot div {
   width: 100%;
-  background: linear-gradient(0deg, #326fcb, #99c3ff);
+  background: linear-gradient(0deg, var(--accent), var(--accent-light));
   border-radius: 5px 5px 0 0;
   opacity: 0.8;
   transition: opacity 0.2s;
@@ -696,7 +698,7 @@ code {
 .today-panel {
   padding: 23px 23px 0;
   background:
-    radial-gradient(ellipse at top right, rgb(8 20 38 / 13%), transparent 65%), var(--surface-low);
+    radial-gradient(ellipse at top right, rgb(255 255 255 / 2%), transparent 65%), var(--surface-low);
 }
 .today-panel h2 {
   font-size: 21px;
@@ -1068,7 +1070,7 @@ td b {
 .message-preview {
   padding: 25px;
   background:
-    radial-gradient(ellipse at center, rgb(8 20 38 / 13%), transparent 80%), var(--surface-low);
+    radial-gradient(ellipse at center, rgb(255 255 255 / 2%), transparent 80%), var(--surface-low);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1083,7 +1085,7 @@ td b {
   border: 1px solid var(--border);
   padding: 16px;
   border-radius: 12px 12px 12px 1px;
-  box-shadow: 0 10px 30px rgb(2 8 20 / 27%);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 27%);
 }
 .telegram-message > b {
   font-size: 13px;
@@ -1241,7 +1243,7 @@ td b {
   position: fixed;
   inset: 0;
   z-index: 100;
-  background: rgb(8 20 38 / 73%);
+  background: rgb(0 0 0 / 60%);
   backdrop-filter: blur(12px);
   display: flex;
   justify-content: center;
@@ -1253,7 +1255,7 @@ td b {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 28px;
-  box-shadow: 0 30px 100px rgb(2 8 20 / 60%);
+  box-shadow: 0 30px 100px rgb(0 0 0 / 60%);
   padding: 25px;
   width: 100%;
   max-width: 550px;
@@ -1377,7 +1379,7 @@ pre {
   padding: 12px 14px;
   color: var(--secondary);
   border-radius: 18px;
-  box-shadow: 0 10px 50px rgb(2 8 20 / 53%);
+  box-shadow: 0 10px 50px rgb(0 0 0 / 53%);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -1400,7 +1402,7 @@ pre {
   text-align: center;
   padding: 30px;
   background:
-    radial-gradient(ellipse at center, rgb(63 112 181 / 14%), transparent 65%), var(--background);
+    radial-gradient(ellipse at center, rgb(138 81 59 / 14%), transparent 65%), var(--background);
 }
 .brand-mark.large {
   width: 70px;
@@ -1467,7 +1469,7 @@ pre {
   border: 1px solid var(--accent-border);
   border-radius: 28px;
   background:
-    radial-gradient(ellipse at 85% 25%, rgb(141 188 255 / 18%), transparent 60%), linear-gradient(125deg, #17365a, #10243e);
+    radial-gradient(ellipse at 85% 25%, rgb(138 81 59 / 18%), transparent 60%), linear-gradient(125deg, #302823, #22201e);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1536,21 +1538,21 @@ pre {
 }
 .brain-art > svg {
   z-index: 2;
-  filter: drop-shadow(0 0 23px rgb(78 144 255 / 35%));
+  filter: drop-shadow(0 0 23px rgb(138 81 59 / 25%));
 }
 .brain-art > span,
 .brain-art > i {
   position: absolute;
   width: 180px;
   height: 180px;
-  border: 1px solid rgb(100 163 255 / 22%);
+  border: 1px solid rgb(208 126 83 / 22%);
   border-radius: 50%;
 }
 .brain-art > i {
   width: 135px;
   height: 135px;
-  border-color: rgb(100 163 255 / 31%);
-  background: rgb(100 163 255 / 6%);
+  border-color: rgb(208 126 83 / 31%);
+  background: rgb(208 126 83 / 6%);
 }
 .user-two-columns {
   display: grid;
@@ -1624,7 +1626,7 @@ pre {
 }
 .progress-track > div {
   height: 100%;
-  background: linear-gradient(90deg, #4c91f0, #b0d1ff);
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
   border-radius: 18px;
 }
 .progress-card > p {
@@ -1932,7 +1934,7 @@ pre {
 .segmented button.active {
   background: var(--surface-raised);
   color: var(--text);
-  box-shadow: 0 2px 6px rgb(2 8 20 / 20%);
+  box-shadow: 0 2px 6px rgb(0 0 0 / 20%);
 }
 .ranking-list {
   padding: 0 23px;
@@ -2197,7 +2199,7 @@ pre {
     display: block;
     position: fixed;
     inset: 0;
-    background: rgb(8 20 38 / 60%);
+    background: rgb(0 0 0 / 60%);
     z-index: 35;
     backdrop-filter: blur(2px);
   }
@@ -2562,13 +2564,13 @@ pre {
     right: 12px;
     z-index: 30;
     border-top: 1px solid var(--border);
-    background: rgb(19 39 65 / 90%);
+    background: rgb(30 30 30 / 94%);
     backdrop-filter: blur(28px) saturate(150%);
     padding: 8px;
     border: 1px solid var(--border);
     border-radius: 26px;
     -webkit-backdrop-filter: blur(28px) saturate(150%);
-    box-shadow: 0 8px 30px rgb(2 8 20 / 28%);
+    box-shadow: 0 8px 30px rgb(0 0 0 / 28%);
   }
   .bottom-nav button {
     flex: 1;
@@ -2653,7 +2655,7 @@ button:active:not(:disabled) { transform: scale(0.98); }
   height: 25px;
   border-radius: 50%;
   background: #fff;
-  box-shadow: 0 2px 4px rgb(2 8 20 / 20%);
+  box-shadow: 0 2px 4px rgb(0 0 0 / 20%);
   transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 .toggle-row input[type="checkbox"]:checked { background: #30a86d; }

@@ -52,9 +52,9 @@ import "./experience.css";
 import {
   PackageCarousel,
   CaseCatalog,
-  CaseArtwork,
   PACKAGES,
 } from "./PackageCarousel";
+import { SelectMenu } from "./SelectMenu";
 
 declare global {
   interface Window {
@@ -318,9 +318,9 @@ export function App() {
       const tg = window.Telegram?.WebApp;
       tg?.ready();
       tg?.expand();
-      tg?.setHeaderColor("#161718");
-      tg?.setBackgroundColor("#161718");
-      tg?.setBottomBarColor?.("#161718");
+      tg?.setHeaderColor("#171717");
+      tg?.setBackgroundColor("#171717");
+      tg?.setBottomBarColor?.("#171717");
       const result = await post("session", {
         initData: tg?.initData || "",
         mode,
@@ -788,24 +788,20 @@ export function App() {
           {!admin && (
             <div className="group-selector">
               <Building2 size={18} />
-              <select
-                aria-label="Guruhni tanlang"
+              <SelectMenu
+                label="Guruhni tanlang"
+                placeholder="Guruhni tanlang"
+                options={session.groups.map((chat) => ({
+                  value: String(chat.chat_id),
+                  label: chat.title,
+                }))}
                 value={group}
-                onChange={(e) => {
+                onChange={(value) => {
                   clearPage();
-                  setGroup(e.target.value);
+                  setGroup(value);
                   setOrder(null);
                 }}
-              >
-                <option value="" disabled>
-                  Guruhni tanlang
-                </option>
-                {session.groups.map((c) => (
-                  <option key={c.chat_id} value={c.chat_id}>
-                    {c.title}
-                  </option>
-                ))}
-              </select>
+              />
               <span>Guruh hisobi</span>
             </div>
           )}
@@ -890,7 +886,12 @@ export function App() {
                         <span />
                         <span />
                       </div>
-                      <div className="bars">
+                      <div
+                        className="bars"
+                        style={{
+                          gap: data.activity.length > 30 ? 1 : data.activity.length > 14 ? 3 : 10,
+                        }}
+                      >
                         {data.activity.map((row: Row) => (
                           <div
                             className="bar-slot"
@@ -1942,11 +1943,6 @@ export function App() {
                       Xarid qilingan <b>{format(data.player.paid_grams)} g</b>
                     </span>
                   </div>
-                </div>
-                <div className="brain-art">
-                  <CaseArtwork eager />
-                  <span />
-                  <i />
                 </div>
               </section>
               <div className="user-two-columns">

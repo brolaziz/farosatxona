@@ -144,6 +144,7 @@ function setup(t, pendingHealth = false, Component = App) {
         preview: false,
         groups: [
           { chat_id: "-100", title: "Sinov guruhi", type: "supergroup" },
+          { chat_id: "-200", title: "Ikkinchi guruh", type: "supergroup" },
         ],
         settings: { maxPurchase: 10000, shopEnabled: true, maintenance: false },
         botUsername: "testbot",
@@ -160,7 +161,7 @@ function setup(t, pendingHealth = false, Component = App) {
     if (path === "/api/me/profile")
       return Response.json({
         player: {
-          grams: 10,
+          grams: url.searchParams.get("chatId") === "-200" ? 30 : 10,
           earned_grams: 10,
           paid_grams: 0,
           streak: 1,
@@ -292,6 +293,9 @@ test("case selection submits exactly the displayed grams, group and Stars invoic
   await waitFor(() => assert.ok(view.getByText("2 ta guruh profili")));
   fireEvent.click(view.getByRole("button", { name: "Foydalanuvchi oynasi" }));
   await waitFor(() => assert.ok(view.getByText("Bugungi nasiba olingan.")));
+  fireEvent.click(view.getByRole("combobox", { name: "Guruhni tanlang" }));
+  fireEvent.click(view.getByRole("option", { name: "Ikkinchi guruh" }));
+  await waitFor(() => assert.ok(view.getByText("30")));
   fireEvent.click(view.getAllByRole("button", { name: "Qora bozor" })[0]);
   const catalog = within(
     view.getByRole("region", { name: "Keyslar katalogi" }),
@@ -312,7 +316,29 @@ test("case selection submits exactly the displayed grams, group and Stars invoic
   fireEvent.click(catalog.getByRole("button", { name: "Zakovat: 20 gramm" }));
   fireEvent.click(buy);
   await waitFor(() => assert.equal(invoices.length, 1));
-  assert.deepEqual(orders, [{ chatId: "-100", grams: 20, acceptTerms: true }]);
+  assert.deepEqual(orders, [{ chatId: "-200", grams: 20, acceptTerms: true }]);
+});
+
+test("group menu supports keyboard selection, dismissal and home shows no case artwork", async (t) => {
+  const { view } = setup(t);
+  await waitFor(() => assert.ok(view.getByText("2 ta guruh profili")));
+  fireEvent.click(view.getByRole("button", { name: "Foydalanuvchi oynasi" }));
+  await waitFor(() => assert.ok(view.getByText("Bugungi nasiba olingan.")));
+  assert.equal(view.container.querySelectorAll(".case-art").length, 0);
+  const picker = view.getByRole("combobox", { name: "Guruhni tanlang" });
+  fireEvent.keyDown(picker, { key: "ArrowDown" });
+  assert.equal(picker.getAttribute("aria-expanded"), "true");
+  fireEvent.keyDown(picker, { key: "ArrowDown" });
+  fireEvent.keyDown(picker, { key: "Enter" });
+  await waitFor(() => assert.ok(view.getByText("30")));
+  assert.ok(picker.textContent.includes("Ikkinchi guruh"));
+  assert.equal(picker.getAttribute("aria-expanded"), "false");
+  fireEvent.click(picker);
+  fireEvent.keyDown(picker, { key: "Escape" });
+  assert.equal(view.queryByRole("listbox"), null);
+  fireEvent.click(picker);
+  fireEvent.pointerDown(document.body);
+  assert.equal(view.queryByRole("listbox"), null);
 });
 
 test("header search opens the players list with the submitted query", async (t) => {
