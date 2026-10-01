@@ -44,4 +44,19 @@ Railway volume’lari root foydalanuvchisiga tegishli bo‘lgani uchun `RAILWAY_
 
 Bot tokeni yoki mavjud baza yo‘qligida jonli ishga tushgan deb hisoblamang. Lokal namoyish sahifasi `src/preview.js` production uchun mo‘ljallanmagan.
 
+## CLI natijasini tekshirish
+
+`config apply` ning exit code’i va “Applied” matni yolg‘iz o‘zi deployni tasdiqlamaydi. `--json` javobidagi `diagnostics` va `status` ni, so‘ng `railway service list --json` orqali haqiqiy servis/volume va deployment holatini tekshiring. Tarif muddati tugaganda CLI muvaffaqiyat matnini chiqarishi mumkin, lekin backend yangi resurslarni yaratmaydi. `Your trial has expired. Please select a plan to continue using Railway` bo‘lsa, workspace tarifini faollashtirish kerak.
+
+Windows’da SDK yangi CLI versiyasini topa olmasa, rasmiy paketning native executable’ini to‘g‘ridan-to‘g‘ri ko‘rsating. Global `@railway/cli` o‘rnatilganda:
+
+```powershell
+$railwayNative = Join-Path (npm root -g) '@railway/cli/bin/railway.exe'
+$env:_ = $railwayNative
+& $railwayNative config plan --out .railway/deploy-plan.json
+& $railwayNative config apply --plan .railway/deploy-plan.json --yes --json
+```
+
+Reja faqat kutilgan Farosatxona resurslarini o‘zgartirayotganini tekshiring. Pinned plan maxfiy qiymatlar va resurs holatini o‘z ichiga olishi mumkin; `.gitignore` uni GitHub’ga push qilishdan chiqaradi.
+
 Rasmiy manbalar: [Railway CLI](https://docs.railway.com/cli), [Infrastructure as Code](https://docs.railway.com/infrastructure-as-code), [Volume va ruxsatlar](https://docs.railway.com/volumes), [Volume cheklovlari](https://docs.railway.com/volumes/reference).
