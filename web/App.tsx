@@ -49,6 +49,7 @@ import {
 import "./style.css";
 import "@fontsource-variable/nunito";
 import "./experience.css";
+import "./store.css";
 import {
   PackageCarousel,
   CaseCatalog,
@@ -684,7 +685,12 @@ export function App() {
             >
               <Menu size={20} />
             </button>
-            {!admin && <b>{heading}</b>}
+            {!admin && (
+              <button className="store-brand" onClick={() => changeTab("home")} aria-label="Farosatxona bosh sahifasi">
+                <Brain size={26} />
+                <span>farosatxona<span>.</span></span>
+              </button>
+            )}
             {admin && (
               <form
                 className="quick-search"
@@ -710,6 +716,20 @@ export function App() {
               </form>
             )}
           </div>
+          {!admin && (
+            <nav className="store-nav" aria-label="Do‘kon menyusi">
+              {visibleNav.map((item) => (
+                <button key={item.id} className={tab === item.id ? "active" : ""} aria-current={tab === item.id ? "page" : undefined} onClick={() => changeTab(item.id)}>
+                  <item.icon size={17} /> {item.title}
+                </button>
+              ))}
+              {session.role !== "user" && (
+                <button onClick={() => { setAdmin(true); changeTab(session.chat_id ? "groups" : "dashboard"); }}>
+                  <ShieldCheck size={17} /> Admin boshqaruvi
+                </button>
+              )}
+            </nav>
+          )}
           <div className="top-right">
             {session.preview && (
               <button
@@ -2161,26 +2181,26 @@ export function App() {
           {!admin && tab === "shop" && group && (
             <div className="shop-layout">
               <section className="market-card">
-                <div className="market-heading">
-                  <span className="market-icon">
-                    <ShoppingBag size={27} />
-                  </span>
-                  <Badge status="credited">1 ⭐ = 1 g</Badge>
+                <div className="store-intro">
+                  <div>
+                    <span className="eyebrow">FAROSAT KOLLEKSIYASI</span>
+                    <h2>Fikringizga kuch qo‘shing.</h2>
+                    <p>Keysni tanlang. Farosat guruhingizdagi hisobga tushadi.</p>
+                  </div>
+                  <div className="store-rate"><Star size={25} fill="currentColor" /><strong>1 Star<span>1 gramm farosat</span></strong></div>
                 </div>
                 <CaseCatalog
                   grams={grams}
                   onChange={(amount) => {
                     setGrams(amount);
-                    if (window.matchMedia?.("(max-width: 1000px)")?.matches) {
-                      checkoutRef.current?.scrollIntoView({
-                        behavior: window.matchMedia(
+                    checkoutRef.current?.scrollIntoView?.({
+                        behavior: window.matchMedia?.(
                           "(prefers-reduced-motion: reduce)",
-                        ).matches
+                        )?.matches
                           ? "auto"
                           : "smooth",
                         block: "start",
                       });
-                    }
                   }}
                 />
                 <label className="field custom-amount">
@@ -2206,6 +2226,7 @@ export function App() {
                 <div className="checkout-preview">
                   <PackageCarousel grams={grams} onChange={setGrams} />
                 </div>
+                <div className="checkout-content">
                 <span className="eyebrow">XARID TAFSILOTLARI</span>
                 <h2>
                   {PACKAGES.find((pack) => pack.grams === grams)?.name ||
@@ -2283,6 +2304,7 @@ export function App() {
                     )}
                   </div>
                 )}
+                </div>
               </section>
             </div>
           )}
