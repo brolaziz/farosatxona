@@ -56,6 +56,8 @@ import {
   PACKAGES,
 } from "./PackageCarousel";
 import { SelectMenu } from "./SelectMenu";
+import { StoreHero } from "./StoreHero";
+import { LoginGate } from "./LoginGate";
 
 declare global {
   interface Window {
@@ -179,27 +181,28 @@ function Modal({
   title,
   children,
   close,
+  className = "",
 }: {
   title: string;
   children: React.ReactNode;
   close: () => void;
+  className?: string;
 }) {
   const dialog = useRef<HTMLElement>(null),
     closeRef = useRef(close);
   closeRef.current = close;
   useEffect(() => {
     const previous = document.activeElement as HTMLElement;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     dialog.current
       ?.querySelector<HTMLElement>("button,input,select,textarea,a")
       ?.focus();
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") closeRef.current();
       if (e.key === "Tab") {
-        const items = [
-          ...(dialog.current?.querySelectorAll<HTMLElement>(
-            "button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled),a[href]",
-          ) || []),
-        ];
+        const items = [...(dialog.current?.querySelectorAll<HTMLElement>("*") || [])]
+          .filter((item) => item.tabIndex >= 0 && !(item as HTMLButtonElement).disabled && !item.closest("[hidden],[inert]") && !(item.tagName === "INPUT" && item.getAttribute("type") === "hidden"));
         const first = items[0],
           last = items.at(-1);
         if (e.shiftKey && document.activeElement === first) {
@@ -214,6 +217,7 @@ function Modal({
     document.addEventListener("keydown", handler);
     return () => {
       document.removeEventListener("keydown", handler);
+      document.body.style.overflow = previousOverflow;
       previous?.focus();
     };
   }, []);
@@ -224,7 +228,7 @@ function Modal({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="modal"
+        className={"modal " + className}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-head">
@@ -266,8 +270,8 @@ export function App() {
   const [session, setSession] = useState<Session | null>(null),
     [error, setError] = useState(""),
     [booting, setBooting] = useState(true);
-  const [admin, setAdmin] = useState(true),
-    [tab, setTab] = useState("dashboard"),
+  const [admin, setAdmin] = useState(false),
+    [tab, setTab] = useState("home"),
     [mobileMenu, setMobileMenu] = useState(false);
   const [group, setGroup] = useState(""),
     [data, setData] = useState<Row | null>(null),
@@ -281,10 +285,10 @@ export function App() {
     [days, setDays] = useState(7);
   const [quickSearch, setQuickSearch] = useState("");
   const quickSearchRef = useRef<HTMLInputElement>(null);
-  const checkoutRef = useRef<HTMLElement>(null);
   const [modal, setModal] = useState<Row | null>(null),
     [form, setForm] = useState<Row>({}),
     [detail, setDetail] = useState<Row | null>(null);
+  const [caseOpen, setCaseOpen] = useState(false);
   const [grams, setGrams] = useState(100),
     [terms, setTerms] = useState(false),
     [order, setOrder] = useState<Row | null>(null),
@@ -328,9 +332,9 @@ export function App() {
       });
       setToken(result.token);
       setSession(result);
-      const isAdmin = result.role !== "user";
-      setAdmin(isAdmin);
-      setTab(isAdmin ? (result.chat_id ? "groups" : "dashboard") : "home");
+      // Every session opens the personal view; admin access is an explicit choice.
+      setAdmin(false);
+      setTab("home");
       const start = tg?.initDataUnsafe?.start_param || "";
       const hinted =
         new URLSearchParams(location.search).get("group") ||
@@ -459,6 +463,19 @@ export function App() {
     setFilter("");
     setMobileMenu(false);
     setModal(null);
+    setCaseOpen(false);
+  };
+  const openCase = (amount: number) => {
+    setGrams(amount);
+    setCaseOpen(true);
+  };
+  const openOrder = (purchase: Row) => {
+    changeTab("shop");
+    setOrder(purchase);
+    setGrams(purchase.grams);
+    const purchaseGroup = session?.groups.find((chat) => String(chat.chat_id) === String(purchase.chat_id));
+    if (purchaseGroup) setGroup(String(purchaseGroup.chat_id));
+    setCaseOpen(true);
   };
   const act = async (
     fn: () => Promise<any>,
@@ -563,24 +580,7 @@ export function App() {
         <p>Farosatingizni tayyorlayapmiz…</p>
       </div>
     );
-  if (!session)
-    return (
-      <div className="gate">
-        <div className="brand-mark large">
-          <Brain />
-        </div>
-        <span className="eyebrow">FAROSATXONA</span>
-        <h1>Farosatning yangi manzili.</h1>
-        <p>Hisobingiz, reyting va Qora bozor — barchasi Telegram ichida.</p>
-        <div className="inline-error">
-          <LockKeyhole size={18} />
-          {error}
-        </div>
-        <button className="primary" onClick={() => login()}>
-          Qayta urinish <ArrowRight size={16} />
-        </button>
-      </div>
-    );
+  if (!session) return <LoginGate error={error} onRetry={() => login()} />;
   return (
     <div className={"app " + (!admin ? "user-app" : "")}>
       {mobileMenu && (
@@ -762,7 +762,7 @@ export function App() {
               to‘lovlariga ta’sir qilmaydi.
             </div>
           )}
-          <div className="page-heading">
+          <div className={"page-heading " + (!admin && ["home", "shop"].includes(tab) ? "store-page-heading" : "")}>
             <div>
               <span className="eyebrow">
                 {admin ? "FAROSATXONA / ADMIN" : "FAROSAT SIZ BILAN"}
@@ -1942,7 +1942,7 @@ export function App() {
               )}
             </>
           )}
-          {!admin && data && ["home", "profile"].includes(tab) && (
+          {!admin && data && tab === "profile" && (
             <>
               <section className="balance-hero">
                 <div>
@@ -2073,22 +2073,6 @@ export function App() {
                   </div>
                 </section>
               </div>
-              {tab === "home" && (
-                <button
-                  className="shop-banner"
-                  onClick={() => changeTab("shop")}
-                >
-                  <span className="shop-banner-icon">
-                    <ShoppingBag size={27} />
-                  </span>
-                  <div>
-                    <span className="eyebrow">QORA BOZOR</span>
-                    <h3>Farosatni kutib o‘tirmang.</h3>
-                    <p>1 Star = 1 gramm. Guruhingizdagi hisobga.</p>
-                  </div>
-                  <ArrowUpRight size={24} />
-                </button>
-              )}
               {tab === "profile" && (
                 <>
                   <section className="panel">
@@ -2156,10 +2140,7 @@ export function App() {
                             {o.status === "pending" && (
                               <button
                                 className="text-btn"
-                                onClick={() => {
-                                  setOrder(o);
-                                  changeTab("shop");
-                                }}
+                                onClick={() => openOrder(o)}
                               >
                                 Holatini ko‘rish
                               </button>
@@ -2178,134 +2159,15 @@ export function App() {
               )}
             </>
           )}
-          {!admin && tab === "shop" && group && (
-            <div className="shop-layout">
-              <section className="market-card">
-                <div className="store-intro">
-                  <div>
-                    <span className="eyebrow">FAROSAT KOLLEKSIYASI</span>
-                    <h2>Fikringizga kuch qo‘shing.</h2>
-                    <p>Keysni tanlang. Farosat guruhingizdagi hisobga tushadi.</p>
-                  </div>
-                  <div className="store-rate"><Star size={25} fill="currentColor" /><strong>1 Star<span>1 gramm farosat</span></strong></div>
-                </div>
-                <CaseCatalog
-                  grams={grams}
-                  onChange={(amount) => {
-                    setGrams(amount);
-                    checkoutRef.current?.scrollIntoView?.({
-                        behavior: window.matchMedia?.(
-                          "(prefers-reduced-motion: reduce)",
-                        )?.matches
-                          ? "auto"
-                          : "smooth",
-                        block: "start",
-                      });
-                  }}
-                />
-                <label className="field custom-amount">
-                  <span>O‘zingiz miqdor kiriting</span>
-                  <div className="amount-input">
-                    <input
-                      aria-label="Farosat miqdori"
-                      type="number"
-                      min={1}
-                      max={session.settings.maxPurchase}
-                      value={grams}
-                      onChange={(e) => setGrams(Number(e.target.value))}
-                    />
-                    <span>gramm</span>
-                  </div>
-                </label>
-                <div className="market-note">
-                  <ShieldCheck size={17} />
-                  <p>Xarid farosati kunlik minus va resetdan himoyalangan.</p>
-                </div>
-              </section>
-              <section className="panel checkout-card" ref={checkoutRef}>
-                <div className="checkout-preview">
-                  <PackageCarousel grams={grams} onChange={setGrams} />
-                </div>
-                <div className="checkout-content">
-                <span className="eyebrow">XARID TAFSILOTLARI</span>
-                <h2>
-                  {PACKAGES.find((pack) => pack.grams === grams)?.name ||
-                    "Sizning tanlovingiz"}
-                </h2>
-                <div className="checkout-row">
-                  <span>Guruh</span>
-                  <b>{selectedChat?.title}</b>
-                </div>
-                <div className="checkout-row">
-                  <span>Hisob egasi</span>
-                  <b>{session.user.first_name}</b>
-                </div>
-                <div className="checkout-row">
-                  <span>Farosat</span>
-                  <b>{format(grams)} g</b>
-                </div>
-                <div className="checkout-row">
-                  <span>Kurs</span>
-                  <b>1 Star = 1 g</b>
-                </div>
-                <div className="checkout-total">
-                  <span>To‘lov</span>
-                  <strong>
-                    <Star size={24} fill="currentColor" />
-                    {format(grams)}
-                  </strong>
-                </div>
-                <label className="terms-check">
-                  <input
-                    type="checkbox"
-                    checked={terms}
-                    onChange={(e) => setTerms(e.target.checked)}
-                  />
-                  <span>
-                    <button
-                      className="text-btn"
-                      onClick={() => setModal({ kind: "terms" })}
-                    >
-                      Xarid shartlari
-                    </button>{" "}
-                    bilan tanishdim va roziman.
-                  </span>
-                </label>
-                <button
-                  className="primary purchase-button"
-                  disabled={
-                    actionBusy ||
-                    !terms ||
-                    !Number.isInteger(grams) ||
-                    grams < 1 ||
-                    grams > session.settings.maxPurchase ||
-                    !session.settings.shopEnabled ||
-                    session.settings.maintenance
-                  }
-                  onClick={() => purchase()}
-                >
-                  <Star size={17} />
-                  {actionBusy ? "Tayyorlanmoqda…" : "Sotib olish"}
-                  <span className="purchase-price">{format(grams)} Stars</span>
-                  <ArrowRight size={16} />
-                </button>
-                <p className="checkout-help">
-                  To‘lov Telegram’ning rasmiy oynasida bajariladi.
-                </p>
-                {order && (
-                  <div className="order-state">
-                    <Badge status={order.status} />
-                    <small>Buyurtma: {order.id.slice(0, 8)}</small>
-                    {order.status === "pending" && (
-                      <p>
-                        Telegram tasdig‘i kutilmoqda. Hisob avtomatik
-                        yangilanadi.
-                      </p>
-                    )}
-                  </div>
-                )}
-                </div>
-              </section>
+          {!admin && ["home", "shop"].includes(tab) && (
+            <div className="storefront">
+              {tab === "home" && <StoreHero profile={data} onBrowse={() => changeTab("shop")} onProfile={() => changeTab("profile")} />}
+              <CaseCatalog grams={grams} onChange={openCase} storageKey={"farosat-cases:" + session.user.id} />
+              <div className="market-note">
+                <ShieldCheck size={17} />
+                <p>1 Star = 1 gramm. Xarid tanlangan guruhga tushadi va kunlik minusdan himoyalangan.</p>
+              </div>
+              {order && <button className="secondary pending-order" onClick={() => openOrder(order)}>Oxirgi xarid holatini ko‘rish <ArrowUpRight size={16} /></button>}
             </div>
           )}
           {!admin && tab === "ranking" && data && (
@@ -2405,6 +2267,104 @@ export function App() {
             <X size={15} />
           </button>
         </div>
+      )}
+      {caseOpen && !modal && !admin && (
+        <Modal className="case-dialog" title={(PACKAGES.find((pack) => pack.grams === grams)?.name || "Farosat") + " keysi"} close={() => setCaseOpen(false)}>
+              <section className="panel checkout-card">
+                <div className="checkout-preview">
+                  <PackageCarousel grams={grams} onChange={setGrams} />
+                </div>
+                <div className="checkout-content">
+                <span className="eyebrow">XARID TAFSILOTLARI</span>
+                <h2>
+                  {PACKAGES.find((pack) => pack.grams === grams)?.name ||
+                    "Sizning tanlovingiz"}
+                </h2>
+                <label className="field custom-amount">
+                  <span>Farosat miqdori</span>
+                  <div className="amount-input">
+                    <input aria-label="Farosat miqdori" type="number" min={1} max={session.settings.maxPurchase} value={grams} onChange={(e) => setGrams(Number(e.target.value))} />
+                    <span>gramm</span>
+                  </div>
+                </label>
+                <div className="checkout-group">
+                  <span>Xarid guruhi</span>
+                  <SelectMenu label="Xarid guruhi" placeholder="Guruhni tanlang" options={session.groups.map((chat) => ({ value: String(chat.chat_id), label: chat.title }))} value={group} onChange={(value) => { clearPage(); setGroup(value); setOrder(null); }} />
+                  {!group && <p className="muted">Xarid qilish uchun guruhni tanlang.</p>}
+                </div>
+                <div className="checkout-row">
+                  <span>Hisob egasi</span>
+                  <b>{session.user.first_name}</b>
+                </div>
+                <div className="checkout-row">
+                  <span>Farosat</span>
+                  <b>{format(grams)} g</b>
+                </div>
+                <div className="checkout-row">
+                  <span>Kurs</span>
+                  <b>1 Star = 1 g</b>
+                </div>
+                <div className="checkout-total">
+                  <span>To‘lov</span>
+                  <strong>
+                    <Star size={24} fill="currentColor" />
+                    {format(grams)}
+                  </strong>
+                </div>
+                <label className="terms-check">
+                  <input
+                    type="checkbox"
+                    checked={terms}
+                    onChange={(e) => setTerms(e.target.checked)}
+                  />
+                  <span>
+                    <button
+                      className="text-btn"
+                      onClick={() => setModal({ kind: "terms" })}
+                    >
+                      Xarid shartlari
+                    </button>{" "}
+                    bilan tanishdim va roziman.
+                  </span>
+                </label>
+                <button
+                  className="primary purchase-button"
+                  disabled={
+                    actionBusy ||
+                    !terms ||
+                    !group ||
+                    !Number.isInteger(grams) ||
+                    grams < 1 ||
+                    grams > session.settings.maxPurchase ||
+                    !session.settings.shopEnabled ||
+                    session.settings.maintenance
+                  }
+                  onClick={() => purchase()}
+                >
+                  <Star size={17} />
+                  {actionBusy ? "Tayyorlanmoqda…" : "Sotib olish"}
+                  <span className="purchase-price">{format(grams)} Stars</span>
+                  <ArrowRight size={16} />
+                </button>
+                <p className="checkout-help">
+                  To‘lov Telegram’ning rasmiy oynasida bajariladi.
+                </p>
+                {order && (
+                  <div className="order-state">
+                    <Badge status={order.status} />
+                    <small>Buyurtma: {order.id.slice(0, 8)}</small>
+                    <small>{order.grams} g · {order.stars} Stars{order.chat_title ? " · " + order.chat_title : ""}</small>
+                    {order.status === "pending" && (
+                      <p>
+                        Telegram tasdig‘i kutilmoqda. Hisob avtomatik
+                        yangilanadi.
+                      </p>
+                    )}
+                  </div>
+                )}
+                </div>
+              </section>
+        </Modal>
       )}
       {modal && (
         <Modal

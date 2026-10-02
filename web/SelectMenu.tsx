@@ -81,6 +81,7 @@ export function SelectMenu({
             else show();
           } else if (event.key === "Escape") {
             event.preventDefault();
+            if (open) event.stopPropagation();
             setOpen(false);
           } else if (open && (event.key === "Home" || event.key === "End")) {
             event.preventDefault();

@@ -1,11 +1,11 @@
-import React, { useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
   Star,
   Gem as GemIcon,
   Orbit,
-  Check,
+  Heart,
 } from "lucide-react";
 
 export const PACKAGES = [
@@ -13,37 +13,49 @@ export const PACKAGES = [
     grams: 10,
     name: "Idrok",
     color: "#66a9ff",
-    image: new URL("./assets/cases/idrok.webp", import.meta.url).href,
+    image: new URL("./assets/cases/v2/sapphire.webp", import.meta.url).href,
   },
   {
     grams: 20,
     name: "Zakovat",
     color: "#ff6b83",
-    image: new URL("./assets/cases/zakovat.webp", import.meta.url).href,
+    image: new URL("./assets/cases/v2/ruby.webp", import.meta.url).href,
   },
   {
     grams: 50,
     name: "Tafakkur",
     color: "#64dda3",
-    image: new URL("./assets/cases/tafakkur.webp", import.meta.url).href,
+    image: new URL("./assets/cases/v2/emerald.webp", import.meta.url).href,
   },
   {
     grams: 100,
     name: "Zehn",
     color: "#6cc8ff",
-    image: new URL("./assets/cases/zehn.webp", import.meta.url).href,
+    image: new URL("./assets/cases/v2/diamond.webp", import.meta.url).href,
+  },
+  {
+    grams: 150,
+    name: "Ilhom",
+    color: "#6cc8ff",
+    image: new URL("./assets/cases/v2/neuron.webp", import.meta.url).href,
   },
   {
     grams: 250,
     name: "Donolik",
     color: "#c394ff",
-    image: new URL("./assets/cases/donolik.webp", import.meta.url).href,
+    image: new URL("./assets/cases/v2/black-hole.webp", import.meta.url).href,
+  },
+  {
+    grams: 350,
+    name: "Koinot",
+    color: "#ff977d",
+    image: new URL("./assets/cases/v2/nebula.webp", import.meta.url).href,
   },
   {
     grams: 500,
     name: "Daholik",
-    color: "#f4c96d",
-    image: new URL("./assets/cases/daholik.webp", import.meta.url).href,
+    color: "#9baeff",
+    image: new URL("./assets/cases/v2/dark-matter.webp", import.meta.url).href,
   },
 ];
 type Pack = (typeof PACKAGES)[number];
@@ -71,71 +83,84 @@ export function CaseArtwork({
 export function CaseCatalog({
   grams,
   onChange,
+  storageKey = "farosat-case-favorites",
 }: {
   grams: number;
   onChange: (grams: number) => void;
+  storageKey?: string;
 }) {
+  const [category, setCategory] = useState("all");
+  const [onlyFavorites, setOnlyFavorites] = useState(false);
+  const [favorites, setFavorites] = useState<number[]>([]);
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(window.localStorage.getItem(storageKey) || "[]");
+      setFavorites(Array.isArray(saved) ? saved.filter((value) => PACKAGES.some((pack) => pack.grams === value)) : []);
+    } catch { setFavorites([]); }
+  }, [storageKey]);
+  const toggleFavorite = (grams: number) => {
+    const next = favorites.includes(grams) ? favorites.filter((value) => value !== grams) : [...favorites, grams];
+    setFavorites(next);
+    try { window.localStorage.setItem(storageKey, JSON.stringify(next)); } catch { /* Browser storage may be unavailable. */ }
+  };
+  const shown = (items: typeof PACKAGES) => onlyFavorites ? items.filter((pack) => favorites.includes(pack.grams)) : items;
+  const hasVisibleCases = shown(category === "crystal" ? PACKAGES.slice(0, 4) : category === "cosmic" ? PACKAGES.slice(4) : PACKAGES).length > 0;
   return (
     <div className="case-catalog" role="region" aria-label="Keyslar katalogi">
+      <div className="catalog-heading"><h2>Barcha farosat keyslari</h2><span>1 Star = 1 gramm</span></div>
+      <div className="catalog-toolbar">
+        <div className="catalog-tabs" aria-label="Keys kategoriyalari">
+          {[["all", "Barchasi"], ["crystal", "Kristallar"], ["cosmic", "Koinot"]].map(([id, title]) => <button key={id} aria-pressed={category === id} onClick={() => setCategory(id)}>{title}</button>)}
+        </div>
+        <button className={"catalog-favorites " + (onlyFavorites ? "active" : "")} aria-pressed={onlyFavorites} onClick={() => setOnlyFavorites((value) => !value)}><Heart size={17} fill={onlyFavorites ? "currentColor" : "none"} /> Tanlanganlar ({favorites.length})</button>
+      </div>
       {[
         {
+          id: "crystal",
           title: "Farosat toshlari",
-          subtitle: "Kichik qadam. Katta farosat.",
           icon: GemIcon,
-          items: PACKAGES.slice(0, 3),
+          items: PACKAGES.slice(0, 4),
         },
         {
+          id: "cosmic",
           title: "Koinot farosati",
-          subtitle: "Fikringiz uchun yangi ufqlar.",
           icon: Orbit,
-          items: PACKAGES.slice(3),
+          items: PACKAGES.slice(4),
         },
-      ].map((section) => (
+      ].filter((section) => (category === "all" || category === section.id) && shown(section.items).length).map((section) => (
         <section className="case-category" key={section.title}>
           <div className="case-category-heading">
             <section.icon size={27} />
             <div>
               <h2>{section.title}</h2>
-              <p>{section.subtitle}</p>
             </div>
           </div>
           <div className="case-grid">
-            {section.items.map((pack) => (
-              <button
+            {shown(section.items).map((pack) => (
+              <article
                 key={pack.grams}
-                type="button"
                 className={
                   "case-card " + (grams === pack.grams ? "selected" : "")
                 }
                 style={{ "--case-color": pack.color } as React.CSSProperties}
-                aria-label={`${pack.name}: ${pack.grams} gramm`}
-                aria-pressed={grams === pack.grams}
-                onClick={() => onChange(pack.grams)}
               >
-                {grams === pack.grams && (
-                  <span className="case-selected">
-                    <Check size={12} /> Tanlangan
-                  </span>
-                )}
-                {pack.grams === 100 && grams !== pack.grams && (
-                  <span className="case-popular">Ommabop</span>
-                )}
+                <button className="case-favorite" aria-label={`${pack.name} keysini tanlanganlarga ${favorites.includes(pack.grams) ? "olib tashlash" : "qo‘shish"}`} aria-pressed={favorites.includes(pack.grams)} onClick={() => toggleFavorite(pack.grams)}><Heart size={18} fill={favorites.includes(pack.grams) ? "currentColor" : "none"} /></button>
+                <button className="case-main" type="button" aria-label={`${pack.name}: ${pack.grams} gramm`} aria-pressed={grams === pack.grams} onClick={() => onChange(pack.grams)}>
                 <div className="case-image-wrap">
                   <CaseArtwork pack={pack} eager={pack.grams <= 50} />
                 </div>
                 <h3>{pack.name}</h3>
-                <span className="case-quantity">
-                  {pack.grams} gramm farosat
-                </span>
                 <span className="case-price">
                   <Star size={14} fill="currentColor" />
                   {pack.grams}
                 </span>
-              </button>
+                </button>
+              </article>
             ))}
           </div>
         </section>
       ))}
+      {!hasVisibleCases && <div className="catalog-empty"><Heart size={28} /><h3>{favorites.length ? "Bu kategoriyada tanlangan keyslar yo‘q" : "Hali tanlangan keyslar yo‘q"}</h3><p>Yoqtirgan keysingizdagi yurak belgisini bosing.</p></div>}
     </div>
   );
 }

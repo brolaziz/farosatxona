@@ -14,8 +14,10 @@ Reference: https://bulldrop.uz/uz. Studied with the Codex in-app Browser on 2026
 
 ## Farosatxona adaptation
 
-- Keep the user-requested charcoal/white palette with warm brown accents, and retain the six original Farosatxona artworks.
-- Give the catalogue its full available width, matching the image-first card proportions. Use three columns for the three-product collections, and two columns on phones.
-- Put the selected artwork and purchase details in a separate full-width panel below the catalogue. The price and grams remain fixed: 1 Star = 1 gram, credited to the chosen group.
+- Keep the user-requested charcoal/white palette with warm brown accents. Replace the old rounded chests with eight original transparent cargo-case renders: sapphire, ruby, emerald, diamond, neuron energy, black hole, nebula and dark matter. Retained source paths and generation prompts are recorded in `case-assets-v2.json`.
+- Give the catalogue its full available width and square artwork, with four items in each collection. Use four columns on desktop, three at intermediate widths and two on phones. Names stay centred above compact Stars price badges.
+- Open the selected artwork and purchase controls in a focused two-column dialog, stacked on phones. Preserve exact pricing: 1 Star = 1 gram, credited to the chosen group. Group selection, invoice status and custom quantities remain functional.
+- Make the user storefront the initial view for every role. Show an illustrated banner carousel with pause/previous/next controls, a personal balance tile, daily activity tile and catalogue. Category filters and saved favourites work locally per user.
+- Adapt the reference's split login card to the application's actual Telegram authentication: original illustration, Telegram launch link and retry action.
 - Use horizontal desktop navigation for the user app; keep the admin sidebar and the existing phone navigation.
 - Preserve reduced-motion support, hidden scrollbar tracks and keyboard-accessible group selection.

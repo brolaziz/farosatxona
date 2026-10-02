@@ -89,7 +89,7 @@ const roles = {
   items: [{ user_id: "2", role: "viewer", chat_id: null }],
 };
 
-function setup(t, pendingHealth = false, Component = App) {
+function setup(t, pendingHealth = false, Component = App, role = "owner") {
   const dom = new JSDOM("<!doctype html><html><body></body></html>", {
     url: "https://unit.invalid/",
   });
@@ -113,7 +113,8 @@ function setup(t, pendingHealth = false, Component = App) {
   globalThis.IS_REACT_ACT_ENVIRONMENT = true;
   const invoices = [],
     orders = [],
-    searches = [];
+    searches = [],
+    requests = [];
   dom.window.Telegram = {
     WebApp: {
       ready() {},
@@ -134,11 +135,12 @@ function setup(t, pendingHealth = false, Component = App) {
   globalThis.fetch = async (input, options) => {
     const url = new URL(String(input), "https://unit.invalid"),
       path = url.pathname;
+    requests.push(path);
     if (path === "/api/session")
       return Response.json({
         token: "test-token",
         expires: Date.now() + 3600000,
-        role: "owner",
+        role,
         chat_id: null,
         user: { id: 1, first_name: "Ega" },
         preview: false,
@@ -202,12 +204,43 @@ function setup(t, pendingHealth = false, Component = App) {
     invoices,
     orders,
     searches,
+    requests,
   };
 }
 
+async function openAdmin(view) {
+  await waitFor(() => assert.ok(view.getByText("Bugungi nasiba olingan.")));
+  fireEvent.click(view.getAllByRole("button", { name: "Admin boshqaruvi" })[0]);
+  await waitFor(() => assert.ok(view.getByText("2 ta guruh profili")));
+}
+
+test("owner and admin sessions always reopen the user home after leaving admin", async (t) => {
+  for (const role of ["owner", "admin"]) {
+    await t.test(role, async (t) => {
+      const { view, requests } = setup(t, false, App, role);
+      await waitFor(() => assert.ok(view.getByText("Bugungi nasiba olingan.")));
+      assert.equal(requests.some((path) => path.startsWith("/api/admin/")), false);
+      assert.ok(view.getAllByRole("navigation", { name: "Asosiy menyu" }).length);
+      assert.equal(view.queryByRole("navigation", { name: "Admin menyusi" }), null);
+
+      await openAdmin(view);
+      assert.ok(requests.includes("/api/admin/dashboard"));
+      assert.ok(view.getByRole("navigation", { name: "Admin menyusi" }));
+
+      view.unmount();
+      requests.length = 0;
+      const reopened = render(createElement(App));
+      await waitFor(() => assert.ok(reopened.getByText("Bugungi nasiba olingan.")));
+      assert.equal(requests.some((path) => path.startsWith("/api/admin/")), false);
+      assert.ok(reopened.getAllByRole("navigation", { name: "Asosiy menyu" }).length);
+      assert.equal(reopened.queryByRole("navigation", { name: "Admin menyusi" }), null);
+    });
+  }
+});
+
 test("admin menus render after changing between dashboard, system and roles", async (t) => {
   const { view } = setup(t);
-  await waitFor(() => assert.ok(view.getByText("2 ta guruh profili")));
+  await openAdmin(view);
   fireEvent.click(view.getByRole("button", { name: "Adminlar" }));
   await waitFor(() =>
     assert.ok(view.getByRole("heading", { name: "Boshqaruv jamoasi" })),
@@ -277,7 +310,7 @@ test("package arrows, dots and keyboard keep the selected amount and Stars equal
 
 test("a delayed system response cannot replace the open roles page", async (t) => {
   const { view, releaseHealth } = setup(t, true);
-  await waitFor(() => assert.ok(view.getByText("2 ta guruh profili")));
+  await openAdmin(view);
   fireEvent.click(view.getByRole("button", { name: "Tizim holati" }));
   fireEvent.click(view.getByRole("button", { name: "Adminlar" }));
   await waitFor(() =>
@@ -290,8 +323,6 @@ test("a delayed system response cannot replace the open roles page", async (t) =
 
 test("case selection submits exactly the displayed grams, group and Stars invoice", async (t) => {
   const { view, orders, invoices } = setup(t);
-  await waitFor(() => assert.ok(view.getByText("2 ta guruh profili")));
-  fireEvent.click(view.getByRole("button", { name: "Foydalanuvchi oynasi" }));
   await waitFor(() => assert.ok(view.getByText("Bugungi nasiba olingan.")));
   fireEvent.click(view.getByRole("combobox", { name: "Guruhni tanlang" }));
   fireEvent.click(view.getByRole("option", { name: "Ikkinchi guruh" }));
@@ -301,30 +332,106 @@ test("case selection submits exactly the displayed grams, group and Stars invoic
     view.getByRole("region", { name: "Keyslar katalogi" }),
   );
   fireEvent.click(catalog.getByRole("button", { name: "Zakovat: 20 gramm" }));
+  const checkout = within(view.getByRole("dialog", { name: "Zakovat keysi" }));
   assert.equal(
-    view.getByRole("spinbutton", { name: "Farosat miqdori" }).value,
+    checkout.getByRole("spinbutton", { name: "Farosat miqdori" }).value,
     "20",
   );
-  const buy = view.getByRole("button", { name: /^Sotib olish/ });
+  const buy = checkout.getByRole("button", { name: /^Sotib olish/ });
   assert.equal(buy.disabled, true);
-  fireEvent.click(view.getByRole("checkbox"));
+  fireEvent.click(checkout.getByRole("checkbox"));
   assert.equal(buy.disabled, false);
-  fireEvent.change(view.getByRole("spinbutton", { name: "Farosat miqdori" }), {
+  fireEvent.change(checkout.getByRole("spinbutton", { name: "Farosat miqdori" }), {
     target: { value: "0" },
   });
   assert.equal(buy.disabled, true);
-  fireEvent.click(catalog.getByRole("button", { name: "Zakovat: 20 gramm" }));
+  fireEvent.click(checkout.getByRole("button", { name: "Zakovat: 20 gramm" }));
   fireEvent.click(buy);
   await waitFor(() => assert.equal(invoices.length, 1));
   assert.deepEqual(orders, [{ chatId: "-200", grams: 20, acceptTerms: true }]);
+  fireEvent.click(checkout.getByRole("combobox", { name: "Xarid guruhi" }));
+  await act(async () => {
+    fireEvent.click(checkout.getByRole("option", { name: "Sinov guruhi" }));
+  });
+  assert.equal(checkout.queryByText("Buyurtma: test-ord"), null);
 });
 
-test("group menu supports keyboard selection, dismissal and home shows no case artwork", async (t) => {
-  const { view } = setup(t);
-  await waitFor(() => assert.ok(view.getByText("2 ta guruh profili")));
-  fireEvent.click(view.getByRole("button", { name: "Foydalanuvchi oynasi" }));
+test("category and favorites filters persist only saved cases after reopening", async (t) => {
+  const { view, orders } = setup(t);
   await waitFor(() => assert.ok(view.getByText("Bugungi nasiba olingan.")));
-  assert.equal(view.container.querySelectorAll(".case-art").length, 0);
+  const catalogElement = view.getByRole("region", { name: "Keyslar katalogi" });
+  const catalog = within(catalogElement);
+  assert.equal(catalogElement.querySelectorAll(".case-main").length, 8);
+  fireEvent.click(catalog.getByRole("button", { name: "Kristallar" }));
+  assert.equal(catalogElement.querySelectorAll(".case-main").length, 4);
+  assert.equal(catalog.queryByRole("button", { name: "Donolik: 250 gramm" }), null);
+  fireEvent.click(catalog.getByRole("button", { name: "Idrok keysini tanlanganlarga qo‘shish" }));
+  fireEvent.click(catalog.getByRole("button", { name: "Koinot", exact: true }));
+  assert.equal(catalogElement.querySelectorAll(".case-main").length, 4);
+  assert.equal(catalog.queryByRole("button", { name: "Idrok: 10 gramm" }), null);
+  fireEvent.click(catalog.getByRole("button", { name: "Donolik keysini tanlanganlarga qo‘shish" }));
+  assert.deepEqual(JSON.parse(window.localStorage.getItem("farosat-cases:1")), [10, 250]);
+  fireEvent.click(catalog.getByRole("button", { name: "Tanlanganlar (2)" }));
+  assert.equal(catalogElement.querySelectorAll(".case-main").length, 1);
+  assert.ok(catalog.getByRole("button", { name: "Donolik: 250 gramm" }));
+  fireEvent.click(catalog.getByRole("button", { name: "Barchasi" }));
+  assert.equal(catalogElement.querySelectorAll(".case-main").length, 2);
+  assert.equal(view.queryByRole("dialog"), null);
+
+  view.unmount();
+  const reopened = render(createElement(App));
+  await waitFor(() => assert.ok(reopened.getByText("Bugungi nasiba olingan.")));
+  const savedElement = reopened.getByRole("region", { name: "Keyslar katalogi" });
+  const saved = within(savedElement);
+  fireEvent.click(saved.getByRole("button", { name: "Tanlanganlar (2)" }));
+  assert.equal(savedElement.querySelectorAll(".case-main").length, 2);
+  assert.ok(saved.getByRole("button", { name: "Idrok keysini tanlanganlarga olib tashlash", pressed: true }));
+  fireEvent.click(saved.getByRole("button", { name: "Idrok keysini tanlanganlarga olib tashlash" }));
+  assert.equal(savedElement.querySelectorAll(".case-main").length, 1);
+  fireEvent.click(saved.getByRole("button", { name: "Kristallar" }));
+  assert.ok(saved.getByRole("heading", { name: "Bu kategoriyada tanlangan keyslar yo‘q" }));
+  assert.deepEqual(JSON.parse(window.localStorage.getItem("farosat-cases:1")), [250]);
+  assert.deepEqual(orders, []);
+});
+
+test("case purchase dialog traps keyboard focus and Escape restores its case button", async (t) => {
+  const { view, orders } = setup(t);
+  await waitFor(() => assert.ok(view.getByText("Bugungi nasiba olingan.")));
+  const catalog = within(view.getByRole("region", { name: "Keyslar katalogi" }));
+  const opener = catalog.getByRole("button", { name: "Idrok: 10 gramm" });
+  opener.focus();
+  fireEvent.click(opener);
+  const dialog = view.getByRole("dialog", { name: "Idrok keysi" });
+  const checkout = within(dialog);
+  const close = checkout.getByRole("button", { name: "Yopish" });
+  assert.ok(document.activeElement === close, "Opening the dialog focuses its close button");
+  const groupPicker = checkout.getByRole("combobox", { name: "Xarid guruhi" });
+  fireEvent.click(groupPicker);
+  fireEvent.keyDown(groupPicker, { key: "Escape" });
+  assert.equal(checkout.queryByRole("listbox"), null);
+  assert.ok(view.getByRole("dialog", { name: "Idrok keysi" }));
+  fireEvent.click(checkout.getByRole("checkbox"));
+  const buy = checkout.getByRole("button", { name: /^Sotib olish/ });
+  buy.focus();
+  fireEvent.keyDown(buy, { key: "Tab" });
+  assert.ok(document.activeElement === close, "Tab from purchase returns to the close button");
+  fireEvent.keyDown(close, { key: "Tab", shiftKey: true });
+  assert.ok(document.activeElement === buy, "Shift+Tab from close returns to purchase");
+  fireEvent.keyDown(dialog, { key: "Escape" });
+  assert.equal(view.queryByRole("dialog"), null);
+  assert.ok(document.activeElement === opener, "Escape returns focus to the selected case");
+  assert.deepEqual(orders, []);
+});
+
+test("group menu supports keyboard selection and profile balance has no misplaced case artwork", async (t) => {
+  const { view } = setup(t);
+  await waitFor(() => assert.ok(view.getByText("Bugungi nasiba olingan.")));
+  fireEvent.click(view.getAllByRole("button", { name: "Profil" })[0]);
+  await waitFor(() =>
+    assert.ok(view.getByRole("heading", { name: "Balans tarixi" })),
+  );
+  assert.ok(view.container.querySelector(".balance-hero"));
+  assert.equal(view.container.querySelectorAll(".balance-hero .case-art").length, 0);
   const picker = view.getByRole("combobox", { name: "Guruhni tanlang" });
   fireEvent.keyDown(picker, { key: "ArrowDown" });
   assert.equal(picker.getAttribute("aria-expanded"), "true");
@@ -343,7 +450,7 @@ test("group menu supports keyboard selection, dismissal and home shows no case a
 
 test("header search opens the players list with the submitted query", async (t) => {
   const { view, searches } = setup(t);
-  await waitFor(() => assert.ok(view.getByText("2 ta guruh profili")));
+  await openAdmin(view);
   fireEvent.change(
     view.getByRole("textbox", { name: "Foydalanuvchini tezkor qidirish" }),
     { target: { value: "Ali" } },
